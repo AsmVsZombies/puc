@@ -1,17 +1,15 @@
 [package]
-name = "pvz_interception_calculator"
-version = "2.0.15"
+name = "puc"
+version = "0.0.1"
 edition = "2021"
-description = "The Rust rewrite of the original PVZ Interception Calculator that calculates precise imp movement."
+description = "PvZ's Ultimate Calculator"
 license = "MIT"
-repository = "https://github.com/Rottenham/pvz-interception-calculator-rust"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
 dyn-fmt = "0.4.0"
 evalexpr = "13.1.0"
-rustyline = "12.0.0"
 termcolor = "1.2"
 csv = "1.1.6"
 lazy_static = "1.4.0"
@@ -22,7 +20,9 @@ num-traits = "0.2.15"
 rayon = "1.7.0"
 serde = { version = "1.0.152", features = ["derive"] }
 strum = { version = "0.24.1", features = ["derive"] }
+clap = { version = "4.6.1", features = ["derive"] }
 
 [features]
+default = ["zh"]
 en = []
 zh = []

@@ -1,56 +1,60 @@
-#[cfg(feature = "en")]
-use pvz_interception_calculator::lang::en::*;
+use clap::{Parser as ClapParser, Subcommand};
+use puc::parser::{ParseResult, Parser};
+use std::process::ExitCode;
 
-#[cfg(feature = "zh")]
-use pvz_interception_calculator::lang::zh::*;
+#[derive(ClapParser)]
+#[command(name = "puc", version, about = "PvZ's Ultimate Calculator")]
+struct Cli {
+    #[command(subcommand)]
+    command: Command,
+}
 
-fn main() -> rustyline::Result<()> {
-    let mut rustyline = rustyline::DefaultEditor::new()?;
-    let mut parser = pvz_interception_calculator::parser::Parser::default();
-    loop {
-        match rustyline.readline("\n$ ") {
-            Ok(line) => {
-                rustyline.add_history_entry(line.as_str()).unwrap();
-                let input = line.trim().to_lowercase();
-                use pvz_interception_calculator::parser::ParseResult;
-                if let ParseResult::Matched = parser.parse_scene(input.as_str()) {
-                    continue;
-                }
-                if let ParseResult::Matched = parser.parse_wave(input.as_str()) {
-                    continue;
-                }
-                if let ParseResult::Matched = parser.parse_delay(input.as_str()) {
-                    continue;
-                }
-                if let ParseResult::Matched = parser.parse_doom(input.as_str()) {
-                    continue;
-                }
-                if let ParseResult::Matched = parser.parse_hit_or_nohit(input.as_str()) {
-                    continue;
-                }
-                if let ParseResult::Matched = parser.parse_find_max_delay(input.as_str()) {
-                    continue;
-                }
-                if let ParseResult::Matched = parser.parse_imp(input.as_str()) {
-                    continue;
-                }
-                if let ParseResult::Matched = parser.parse_about(input.as_str()) {
-                    continue;
-                }
-                if let ParseResult::Matched = parser.parse_help(input.as_str()) {
-                    continue;
-                }
-                parser.eval_expr(input.as_str());
-            }
-            Err(rustyline::error::ReadlineError::Interrupted)
-            | Err(rustyline::error::ReadlineError::Eof) => {
-                break;
-            }
-            Err(err) => {
-                println!("{ERROR}: {:?}", err);
-                break;
+#[derive(Subcommand)]
+enum Command {
+    /// Run interception commands (semicolon-separated for chaining)
+    Intercept {
+        /// Command string, e.g. "pe; wave 1 400 800; delay 8.8"
+        command: String,
+    },
+}
+
+fn dispatch(parser: &mut Parser, input: &str) -> ParseResult {
+    let dispatchers: [fn(&mut Parser, &str) -> ParseResult; 7] = [
+        Parser::parse_scene,
+        Parser::parse_wave,
+        Parser::parse_delay,
+        Parser::parse_doom,
+        Parser::parse_hit_or_nohit,
+        Parser::parse_find_max_delay,
+        Parser::parse_imp,
+    ];
+    for d in dispatchers {
+        match d(parser, input) {
+            ParseResult::Unmatched => continue,
+            other => return other,
+        }
+    }
+    ParseResult::Unmatched
+}
+
+fn main() -> ExitCode {
+    let cli = Cli::parse();
+    let Command::Intercept { command } = cli.command;
+
+    let mut parser = Parser::default();
+    for segment in command.split(';') {
+        let line = segment.trim().to_lowercase();
+        if line.is_empty() {
+            continue;
+        }
+        match dispatch(&mut parser, &line) {
+            ParseResult::Ok => continue,
+            ParseResult::Err => return ExitCode::from(1),
+            ParseResult::Unmatched => {
+                eprintln!("error: unknown command (got: {})", line);
+                return ExitCode::from(1);
             }
         }
     }
-    Ok(())
+    ExitCode::SUCCESS
 }

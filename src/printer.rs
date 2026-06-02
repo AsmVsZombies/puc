@@ -1,214 +1,244 @@
 use crate::game;
-use dyn_fmt::AsStrFormatExt;
 use game::MAX_INTERCEPTION_DELAY;
-use std::io::Write;
-use std::str;
-use termcolor::{Color, ColorChoice, ColorSpec, StandardStream, WriteColor};
 
-#[cfg(feature = "en")]
-use crate::lang::en::*;
-
-#[cfg(feature = "zh")]
-use crate::lang::zh::*;
-
-pub fn print_warning(str: &str) {
-    print_colored(format!("{}: {}", WARNING, str).as_str(), Color::Yellow);
-}
-
-fn print_colored(str: &str, color: Color) {
-    let print_colored_internal = |stdout: &mut StandardStream| {
-        stdout.set_color(ColorSpec::new().set_fg(Some(color)))?;
-        write!(stdout, "{}", str)
-    };
-    let mut stdout = StandardStream::stdout(ColorChoice::Always);
-    if print_colored_internal(&mut stdout).is_err() {
-        println!("{}", str); // 如果出现错误，改用普通打印
-    }
-    stdout.reset().unwrap_or_default();
-    println!();
+pub fn print_warning(msg: &str) {
+    eprintln!("warning: {}", msg);
 }
 
 pub fn print_error(error: &str) {
-    println!("{INPUT_ERROR}: {error}");
+    eprintln!("error: {}", error);
 }
 
 pub fn print_error_with_input(error: &str, input: &str) {
-    println!("{INPUT_ERROR}: {error} ({INPUT_ERROR_GOT}: {input})")
+    eprintln!("error: {} (got: {})", error, input);
 }
 
 pub fn print_too_many_arguments_error() {
-    println!("{INPUT_ERROR_TOO_MANY_ARGUMENTS}");
+    eprintln!("error: too many arguments");
 }
 
 pub fn print_bad_format_error() {
-    println!("{INPUT_ERROR_BAD_FORMAT}");
+    eprintln!("error: bad input format");
 }
 
-pub fn print_ice_times_and_cob_time(
-    game::IceAndCobTimes {
-        ice_times,
-        cob_time,
-    }: &game::IceAndCobTimes,
-    min_max_garg_x: (f32, f32),
-    delayed: bool,
-) {
-    let (min_garg_x, max_garg_x) = min_max_garg_x;
-    if max_garg_x as i32 > 817 {
-        print_warning(CANNOT_HIT_ALL_GARG);
+fn floor_3(v: f32) -> f32 {
+    (v * 1000.0).floor() / 1000.0
+}
+
+fn format_ice_cob(times: &game::IceAndCobTimes, min_max_garg_x: (f32, f32)) -> String {
+    let ice = times
+        .ice_times
+        .iter()
+        .map(|t| t.to_string())
+        .collect::<Vec<_>>()
+        .join(",");
+    let (lo, hi) = min_max_garg_x;
+    format!(
+        "ice=[{}] cob={} garg_x=[{:.3},{:.3}]",
+        ice,
+        times.cob_time,
+        floor_3(lo),
+        floor_3(hi),
+    )
+}
+
+pub fn print_wave_status(times: &game::IceAndCobTimes, min_max_garg_x: (f32, f32)) {
+    if min_max_garg_x.1 as i32 > 817 {
+        print_warning("cannot hit all gargs at this tick");
     }
-    println!(
-        "{}: {}{}",
-        if delayed { DELAY_SETTING } else { SETTING },
-        match ice_times.as_slice() {
-            [] => NO_ICE.to_string(),
-            ice_times => format!("{:?}{ICE}", ice_times),
-        },
-        if delayed {
-            format!(" {}{COB_EFFECTIVE}", cob_time)
-        } else {
-            format!(" {}{COB_ACTIVATE}", cob_time)
-        }
-    );
-    let min_garg_x = (min_garg_x * 1000.0).floor() / 1000.0;
-    let max_garg_x = (max_garg_x * 1000.0).floor() / 1000.0;
-    println!("{GARG_X_RANGE}: [{:.3}, {:.3}]", min_garg_x, max_garg_x);
+    println!("wave {}", format_ice_cob(times, min_max_garg_x));
 }
 
-pub fn print_cob_calc_setting(
-    cob_and_garg_rows: &[(game::Cob, Vec<i32>)],
-    explode: Option<game::Explode>,
-    modified_min_max_garg_x: Option<(f32, f32)>,
-    cob_col_range: Option<(f32, f32)>,
-) {
-    println!(
-        "{CALCULATION_SETTING}: {}{}{}{}",
-        cob_and_garg_rows
-            .iter()
-            .map(|(cob, garg_rows)| {
-                COB_GARG_ROWS.format(&[cob.row().to_string(), format!("{:?}", garg_rows)])
-            })
-            .collect::<Vec<String>>()
-            .join(", "),
-        if let Some((min_cob_col, max_cob_col)) = cob_col_range {
-            ", ".to_owned() + &COB_COL_RANGE.format(&[min_cob_col, max_cob_col])
-        } else {
-            "".to_string()
-        },
-        if let Some(explode) = explode {
-            format!(
-                ", {EXPLOSION_CENTER}x={} y={}",
-                explode.range.center.x, explode.range.center.y
-            )
-        } else {
-            "".to_string()
-        },
-        if let Some((min_garg_x, max_garg_x)) = modified_min_max_garg_x {
-            format!(", {GARG}x={}~{}", min_garg_x, max_garg_x)
-        } else {
-            "".to_string()
-        }
-    );
+pub fn print_delay_status(times: &game::IceAndCobTimes, min_max_garg_x: (f32, f32)) {
+    if min_max_garg_x.1 as i32 > 817 {
+        print_warning("cannot hit all gargs at this tick");
+    }
+    eprintln!("# delayed {}", format_ice_cob(times, min_max_garg_x));
 }
 
-pub fn print_doom_calc_setting(
-    doom_row: i32,
-    garg_rows: &[i32],
-    explode: Option<&game::Explode>,
-    modified_min_max_garg_x: Option<(f32, f32)>,
-) {
-    println!(
-        "{CALCULATION_SETTING}: {}{}{}",
-        DOOM_GARG_ROWS.format(&[doom_row.to_string(), format!("{:?}", garg_rows)]),
-        if let Some(explode) = explode {
-            format!(
-                ", {EXPLOSION_CENTER}x={} y={}",
-                explode.range.center.x, explode.range.center.y
-            )
-        } else {
-            "".to_string()
-        },
-        if let Some(modified_min_max_garg_x) = modified_min_max_garg_x {
-            format!(
-                ", {GARG}x={}~{}",
-                modified_min_max_garg_x.0, modified_min_max_garg_x.1
-            )
-        } else {
-            "".to_string()
-        }
-    );
+fn format_rows(rows: &[i32]) -> String {
+    rows.iter()
+        .map(|r| r.to_string())
+        .collect::<Vec<_>>()
+        .join(",")
 }
 
-pub fn print_eat_and_intercept(eat: &game::Eat, intercept: &game::Intercept) {
-    print!("{INTERCEPTABLE_INTERVAL}: ");
-    match intercept {
+fn format_cobs(cob_and_garg_rows: &[(game::Cob, Vec<i32>)]) -> String {
+    let hit_rows: Vec<String> = cob_and_garg_rows
+        .iter()
+        .map(|(cob, _)| cob.row().to_string())
+        .collect();
+    let cob = &cob_and_garg_rows[0].0;
+    let col_part = format!("col={}", cob.col());
+    let cob_col_part = match cob {
+        game::Cob::Roof { cob_col, .. } => format!(" cob_col={}", cob_col),
+        _ => String::new(),
+    };
+    format!("row={} {}{}", hit_rows.join(","), col_part, cob_col_part)
+}
+
+fn format_eat_and_intercept(eat: &game::Eat, intercept: &game::Intercept) -> String {
+    let intercept_str = match intercept {
         game::Intercept::Empty | game::Intercept::OnlyHighIndexImp | game::Intercept::Fail => {
-            print_colored(CANNOT_INTERCEPT, Color::Yellow)
+            "cannot".to_string()
         }
         game::Intercept::Success { min, max } => {
             if *max == MAX_INTERCEPTION_DELAY {
-                print!("{}+", min);
+                format!("{}+", min)
             } else {
-                print!("{}~{}", min, max,);
-            }
-            match game::unsafe_intercept_interval(eat, intercept) {
-                None => println!(),
-                Some((min, max)) => print_colored(
-                    if max != MAX_INTERCEPTION_DELAY {
-                        format!(" ({}~{}{WILL_CAUSE_HARM})", min, max)
-                    } else {
-                        format!(" ({}+{WILL_CAUSE_HARM})", min)
-                    }
-                    .as_str(),
-                    Color::Yellow,
-                ),
+                format!("{}~{}", min, max)
             }
         }
     };
-    println!(
-        "{EARLIEST_EAT}: {}",
-        match &eat {
-            game::Eat::Empty => DOES_NOT_EAT.to_string(),
-            game::Eat::Some { eat, iceable: _ } => eat.to_string(),
+    let unsafe_part = match game::unsafe_intercept_interval(eat, intercept) {
+        None => String::new(),
+        Some((min, max)) => {
+            if max == MAX_INTERCEPTION_DELAY {
+                format!(" unsafe={}+", min)
+            } else {
+                format!(" unsafe={}~{}", min, max)
+            }
         }
-    );
+    };
+    let eat_str = match eat {
+        game::Eat::Empty => "none".to_string(),
+        game::Eat::Some { eat, iceable: _ } => eat.to_string(),
+    };
+    let iceable_str = match eat {
+        game::Eat::Empty => "none".to_string(),
+        game::Eat::Some { eat: _, iceable } => iceable.to_string(),
+    };
+    format!(
+        "intercept={}{} eat={} iceable={}",
+        intercept_str, unsafe_part, eat_str, iceable_str
+    )
+}
+
+pub fn print_delay_result(
+    cob_and_garg_rows: &[(game::Cob, Vec<i32>)],
+    garg_rows: &[i32],
+    eat: &game::Eat,
+    intercept: &game::Intercept,
+    modified_min_max_garg_x: Option<(f32, f32)>,
+) {
+    let garg_x_part = match modified_min_max_garg_x {
+        Some((lo, hi)) => format!(" garg_x=[{},{}]", lo, hi),
+        None => String::new(),
+    };
     println!(
-        "{EARLIEST_ICEABLE}: {}",
-        match &eat {
-            game::Eat::Empty => NOT_ICEABLE.to_string(),
-            game::Eat::Some { eat: _, iceable } => iceable.to_string(),
-        }
+        "delay {} garg_rows=[{}]{} {}",
+        format_cobs(cob_and_garg_rows),
+        format_rows(garg_rows),
+        garg_x_part,
+        format_eat_and_intercept(eat, intercept),
     );
+}
+
+pub fn print_doom_result(
+    doom_row: i32,
+    doom_col: i32,
+    garg_rows: &[i32],
+    eat: &game::Eat,
+    intercept: &game::Intercept,
+    modified_min_max_garg_x: Option<(f32, f32)>,
+) {
+    let garg_x_part = match modified_min_max_garg_x {
+        Some((lo, hi)) => format!(" garg_x=[{},{}]", lo, hi),
+        None => String::new(),
+    };
+    println!(
+        "doom row={} col={} garg_rows=[{}]{} {}",
+        doom_row,
+        doom_col,
+        format_rows(garg_rows),
+        garg_x_part,
+        format_eat_and_intercept(eat, intercept),
+    );
+}
+
+pub fn print_max_result(
+    hit_row: i32,
+    col_range: (f32, f32),
+    cob_col: Option<i32>,
+    garg_rows: &[i32],
+    best_cols: &[f32],
+    eat: &game::Eat,
+    intercept: &game::Intercept,
+    modified_min_max_garg_x: Option<(f32, f32)>,
+) {
+    let garg_x_part = match modified_min_max_garg_x {
+        Some((lo, hi)) => format!(" garg_x=[{},{}]", lo, hi),
+        None => String::new(),
+    };
+    let cob_col_part = match cob_col {
+        Some(c) => format!(" cob_col={}", c),
+        None => String::new(),
+    };
+    let best = best_cols
+        .iter()
+        .map(|c| c.to_string())
+        .collect::<Vec<_>>()
+        .join(",");
+    println!(
+        "max row={} col_range={}~{}{} garg_rows=[{}]{} best_cols=[{}] {}",
+        hit_row,
+        col_range.0,
+        col_range.1,
+        cob_col_part,
+        format_rows(garg_rows),
+        garg_x_part,
+        best,
+        format_eat_and_intercept(eat, intercept),
+    );
+}
+
+pub fn print_max_no_harmless(
+    hit_row: i32,
+    col_range: (f32, f32),
+    cob_col: Option<i32>,
+    garg_rows: &[i32],
+    modified_min_max_garg_x: Option<(f32, f32)>,
+) {
+    let garg_x_part = match modified_min_max_garg_x {
+        Some((lo, hi)) => format!(" garg_x=[{},{}]", lo, hi),
+        None => String::new(),
+    };
+    let cob_col_part = match cob_col {
+        Some(c) => format!(" cob_col={}", c),
+        None => String::new(),
+    };
+    println!(
+        "max row={} col_range={}~{}{} garg_rows=[{}]{} result=cannot_intercept_without_harm",
+        hit_row,
+        col_range.0,
+        col_range.1,
+        cob_col_part,
+        format_rows(garg_rows),
+        garg_x_part,
+    );
+}
+
+fn fmt_x_col(x: i32) -> String {
+    format!("{}(col={})", x, (x as f32) / 80.)
 }
 
 pub fn print_hit_cob_dist(scene: &game::Scene, max_garg_x: i32, cob_dist: &game::CobDist) {
     match scene {
         game::Scene::DE | game::Scene::PE => {
             println!(
-                "{HIT_SAME_AND_LOWER}: {} ({})",
-                max_garg_x - cob_dist.hit_same,
-                COL.format(&[((max_garg_x - cob_dist.hit_same) as f32) / 80.])
-            );
-            println!(
-                "{HIT_ALL_THREE_ROWS}: {} ({})",
-                max_garg_x - cob_dist.hit_above,
-                COL.format(&[((max_garg_x - cob_dist.hit_above) as f32) / 80.])
+                "hit garg_x={} same_below={} three_rows={}",
+                max_garg_x,
+                fmt_x_col(max_garg_x - cob_dist.hit_same),
+                fmt_x_col(max_garg_x - cob_dist.hit_above),
             );
         }
         game::Scene::RE => {
             println!(
-                "{HIT_UPPER_ROW}: {} ({})",
-                max_garg_x - cob_dist.hit_above,
-                COL.format(&[((max_garg_x - cob_dist.hit_above) as f32) / 80.])
-            );
-            println!(
-                "{HIT_SAME_ROW}: {} ({})",
-                max_garg_x - cob_dist.hit_same,
-                COL.format(&[((max_garg_x - cob_dist.hit_same) as f32) / 80.])
-            );
-            println!(
-                "{HIT_LOWER_ROW}: {} ({})",
-                max_garg_x - cob_dist.hit_below,
-                COL.format(&[((max_garg_x - cob_dist.hit_below) as f32) / 80.])
+                "hit garg_x={} above={} same={} below={}",
+                max_garg_x,
+                fmt_x_col(max_garg_x - cob_dist.hit_above),
+                fmt_x_col(max_garg_x - cob_dist.hit_same),
+                fmt_x_col(max_garg_x - cob_dist.hit_below),
             );
         }
     }
@@ -218,32 +248,36 @@ pub fn print_nohit_cob_dist(scene: &game::Scene, min_garg_x: i32, cob_dist: &gam
     match scene {
         game::Scene::DE | game::Scene::PE => {
             println!(
-                "{NOT_HIT_SAME_AND_LOWER}: {} ({})",
-                min_garg_x - cob_dist.hit_same - 1,
-                COL.format(&[((min_garg_x - cob_dist.hit_same - 1) as f32) / 80.])
-            );
-            println!(
-                "{NOT_HIT_UPPER_ROW}: {} ({})",
-                min_garg_x - cob_dist.hit_above - 1,
-                COL.format(&[((min_garg_x - cob_dist.hit_above - 1) as f32) / 80.])
+                "nohit garg_x={} same_below={} above={}",
+                min_garg_x,
+                fmt_x_col(min_garg_x - cob_dist.hit_same - 1),
+                fmt_x_col(min_garg_x - cob_dist.hit_above - 1),
             );
         }
         game::Scene::RE => {
             println!(
-                "{NOT_HIT_UPPER_ROW}: {} ({})",
-                min_garg_x - cob_dist.hit_above - 1,
-                COL.format(&[((min_garg_x - cob_dist.hit_above - 1) as f32) / 80.])
-            );
-            println!(
-                "{NOT_HIT_SAME_ROW}: {} ({})",
-                min_garg_x - cob_dist.hit_same - 1,
-                COL.format(&[((min_garg_x - cob_dist.hit_same - 1) as f32) / 80.])
-            );
-            println!(
-                "{NOT_HIT_LOWER_ROW}: {} ({})",
-                min_garg_x - cob_dist.hit_below - 1,
-                COL.format(&[((min_garg_x - cob_dist.hit_below - 1) as f32) / 80.])
+                "nohit garg_x={} above={} same={} below={}",
+                min_garg_x,
+                fmt_x_col(min_garg_x - cob_dist.hit_above - 1),
+                fmt_x_col(min_garg_x - cob_dist.hit_same - 1),
+                fmt_x_col(min_garg_x - cob_dist.hit_below - 1),
             );
         }
     }
+}
+
+pub fn print_imp_x_for_garg(garg_x: f32, imp_x_rnd_0: f32, imp_x_rnd_100: f32) {
+    println!(
+        "imp garg_x={} imp_x={:.3}~{:.3}",
+        garg_x, imp_x_rnd_0, imp_x_rnd_100
+    );
+}
+
+pub fn print_garg_x_for_imp(imp_x_label: &str, min_garg_x: f32, max_garg_x: f32) {
+    println!(
+        "imp imp_x={} garg_x={:.3}~{:.3}",
+        imp_x_label,
+        floor_3(min_garg_x),
+        floor_3(max_garg_x),
+    );
 }
