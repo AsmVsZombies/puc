@@ -1,4 +1,4 @@
-pub use std::cmp::{min, max};
+pub use std::cmp::{max, min};
 pub use std::collections::{HashMap, HashSet};
 pub use std::str::FromStr;
 pub use strum::IntoEnumIterator;

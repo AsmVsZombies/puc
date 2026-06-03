@@ -100,6 +100,30 @@ puc ipp 433 --wave-len 601 --ice 0
 # ipp transition=433 wave_len=601 ice=0 equiv=cob garg_x=719.94 cob_col=7.4125 ...
 ```
 
+### `puc seml` — SEML 模拟器
+
+```sh
+puc seml [--compact] <pos|smash|explode|refresh|pogo> <文件>
+```
+
+解析 SEML 场景文件，调用内置 PvZ 模拟器，输出对应测试结果：
+
+| 类型 | 说明 |
+| --- | --- |
+| `pos` | 坐标 / 到达时刻分布 |
+| `smash` | 红眼砸率 |
+| `explode` | 炮伤随时间变化 |
+| `refresh` | 刷新意外率 |
+| `pogo` | 跳跳全收范围 |
+
+`--compact` 输出简表：`smash` / `refresh` / `pos` 省略明细，`explode` / `pogo`
+只输出 50cs 倍数和首尾端点。SEML 语法见 [doc/seml.md](doc/seml.md)。
+
+```sh
+puc seml smash tests/fixtures/smash.seml
+puc seml --compact refresh tests/fixtures/refresh.seml
+```
+
 ### 僵尸 key（`--zombies`）
 
 `regular` `regular_dc_fast` `regular_dc_slow` `pole` `newspaper` `door` `football`

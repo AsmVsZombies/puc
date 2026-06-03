@@ -34,7 +34,8 @@ pub const HIT_COL_WITH_MAX_DELAY: &str = "Cob hit col with max delay";
 
 // parse_imp
 pub const NEED_GARG_X_OR_IMP_X: &str = "Please provide garg x, or use: imp garg [imp x].";
-pub const NEED_IMP_X_RANGE: &str = "Please provide imp x (integer), or two comma-separated integers.";
+pub const NEED_IMP_X_RANGE: &str =
+    "Please provide imp x (integer), or two comma-separated integers.";
 pub const IMP_X_SHOULD_BE_INTEGER: &str = "imp x should be integer";
 pub const IMP_X_SHOULD_BE_IN_RANGE: &str = "should satisfy {} ≤ imp x ≤ {}";
 pub const GARG_X_SHOULD_BE_NUMBER: &str = "garg x should be number";

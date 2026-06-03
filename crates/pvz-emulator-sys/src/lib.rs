@@ -39,7 +39,9 @@ pub fn run(calculator: &str, scenario_json: &str, params_json: &str) -> Result<S
     }
 
     // SAFETY: `out` is a malloc'd NUL-terminated string owned by us until puc_free.
-    let json = unsafe { CStr::from_ptr(out) }.to_string_lossy().into_owned();
+    let json = unsafe { CStr::from_ptr(out) }
+        .to_string_lossy()
+        .into_owned();
     unsafe { puc_free(out) };
 
     if rc == 0 {

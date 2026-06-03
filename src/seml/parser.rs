@@ -41,7 +41,10 @@ struct Line {
 
 /// Parse a full SEML document.
 pub fn parse(text: &str) -> R<Parsed> {
-    let raw: Vec<String> = text.split('\n').map(|l| l.trim_end_matches('\r').to_string()).collect();
+    let raw: Vec<String> = text
+        .split('\n')
+        .map(|l| l.trim_end_matches('\r').to_string())
+        .collect();
     let lines = expand_lines(&raw)?;
 
     let mut config = Config::default();
@@ -69,14 +72,26 @@ pub fn parse(text: &str) -> R<Parsed> {
             let original = config.setting.original_scene.clone().unwrap_or_default();
             let prev = params.ban.clone();
             let v = parse_zombie_type_arg(
-                &mut seen, "require", &original, line_num, &line, prev.as_deref(), true,
+                &mut seen,
+                "require",
+                &original,
+                line_num,
+                &line,
+                prev.as_deref(),
+                true,
             )?;
             params.require = Some(v);
         } else if symbol.starts_with("ban:") {
             let original = config.setting.original_scene.clone().unwrap_or_default();
             let prev = params.require.clone();
             let v = parse_zombie_type_arg(
-                &mut seen, "ban", &original, line_num, &line, prev.as_deref(), true,
+                &mut seen,
+                "ban",
+                &original,
+                line_num,
+                &line,
+                prev.as_deref(),
+                true,
             )?;
             params.ban = Some(v);
         } else if symbol.starts_with("huge:") {
@@ -105,9 +120,8 @@ pub fn parse(text: &str) -> R<Parsed> {
             }
         } else if symbol.starts_with("types:") {
             let original = config.setting.original_scene.clone().unwrap_or_default();
-            let v = parse_zombie_type_arg(
-                &mut seen, "types", &original, line_num, &line, None, false,
-            )?;
+            let v =
+                parse_zombie_type_arg(&mut seen, "types", &original, line_num, &line, None, false)?;
             params.zombies = Some(v);
         } else if symbol.starts_with("targetPos:") {
             let v = parse_int_arg(&mut seen, "targetPos", line_num, &line)?;
@@ -163,8 +177,12 @@ pub fn parse(text: &str) -> R<Parsed> {
                     {
                         *time -= 1;
                     }
-                    Action::FixedFodder { time, shovel_time, .. }
-                    | Action::SmartFodder { time, shovel_time, .. } => {
+                    Action::FixedFodder {
+                        time, shovel_time, ..
+                    }
+                    | Action::SmartFodder {
+                        time, shovel_time, ..
+                    } => {
                         *time += 1;
                         if let Some(s) = shovel_time {
                             *s += 1;
@@ -193,7 +211,10 @@ fn expand_lines(raw: &[String]) -> R<Vec<Line>> {
         .map(|(i, l)| {
             let no_comment = l.split('#').next().unwrap_or("").trim();
             let collapsed = collapse_ws(no_comment);
-            Line { line_num: i + 1, line: collapsed }
+            Line {
+                line_num: i + 1,
+                line: collapsed,
+            }
         })
         .collect();
 
@@ -205,7 +226,10 @@ fn expand_lines(raw: &[String]) -> R<Vec<Line>> {
         let symbol = line.split(' ').next().unwrap_or("");
 
         if !(symbol.starts_with('w') && symbol.contains('~')) {
-            out.push(Line { line_num, line: line.clone() });
+            out.push(Line {
+                line_num,
+                line: line.clone(),
+            });
         } else {
             let tilde = symbol.find('~').unwrap();
             let start_wave = parse_natural(&symbol[1..tilde]);
@@ -256,7 +280,9 @@ fn collapse_ws(s: &str) -> String {
 fn populate_line_with_wave(line: &str, wave_num: i32) -> String {
     if line.starts_with('w') {
         let rest: Vec<&str> = line.split(' ').skip(1).collect();
-        format!("w{} {}", wave_num, rest.join(" ")).trim().to_string()
+        format!("w{} {}", wave_num, rest.join(" "))
+            .trim()
+            .to_string()
     } else {
         line.to_string()
     }
@@ -268,8 +294,18 @@ fn replace_variables(vars: &[(String, f64)], line: &str) -> String {
     }
     let reserved = if line.starts_with("SET") { 2 } else { 1 };
     let toks: Vec<&str> = line.split(' ').collect();
-    let head = toks.iter().take(reserved).cloned().collect::<Vec<_>>().join(" ");
-    let mut tail = toks.iter().skip(reserved).cloned().collect::<Vec<_>>().join(" ");
+    let head = toks
+        .iter()
+        .take(reserved)
+        .cloned()
+        .collect::<Vec<_>>()
+        .join(" ");
+    let mut tail = toks
+        .iter()
+        .skip(reserved)
+        .cloned()
+        .collect::<Vec<_>>()
+        .join(" ");
     for (name, val) in vars {
         tail = tail.replace(name, &fmt_num(*val));
     }
@@ -370,7 +406,11 @@ fn parse_protect(config: &mut Config, line_num: usize, line: &str) -> R<()> {
             }
         };
 
-        let kind = if is_normal { ProtectKind::Normal } else { ProtectKind::Cob };
+        let kind = if is_normal {
+            ProtectKind::Normal
+        } else {
+            ProtectKind::Cob
+        };
         // overlap check against previous positions in the same row
         for prev in &protect {
             if prev.row == row {
@@ -379,8 +419,11 @@ fn parse_protect(config: &mut Config, line_num: usize, line: &str) -> R<()> {
                 } else {
                     vec![prev.col - 1, prev.col]
                 };
-                let new_cols: Vec<i32> =
-                    if kind == ProtectKind::Normal { vec![col] } else { vec![col - 1, col] };
+                let new_cols: Vec<i32> = if kind == ProtectKind::Normal {
+                    vec![col]
+                } else {
+                    vec![col - 1, col]
+                };
                 if prev_cols.iter().any(|pc| new_cols.contains(pc)) {
                     return Err(e(line_num, "保护位置重叠", pos_token));
                 }
@@ -398,7 +441,12 @@ fn arg_value(line: &str) -> String {
     line.splitn(2, ':').nth(1).unwrap_or("").trim().to_string()
 }
 
-fn parse_int_arg(seen: &mut HashSet<&'static str>, name: &'static str, line_num: usize, line: &str) -> R<i32> {
+fn parse_int_arg(
+    seen: &mut HashSet<&'static str>,
+    name: &'static str,
+    line_num: usize,
+    line: &str,
+) -> R<i32> {
     if seen.contains(name) {
         return Err(e(line_num, "参数重复", name));
     }
@@ -412,7 +460,12 @@ fn parse_int_arg(seen: &mut HashSet<&'static str>, name: &'static str, line_num:
     }
 }
 
-fn parse_bool_arg(seen: &mut HashSet<&'static str>, name: &'static str, line_num: usize, line: &str) -> R<Option<bool>> {
+fn parse_bool_arg(
+    seen: &mut HashSet<&'static str>,
+    name: &'static str,
+    line_num: usize,
+    line: &str,
+) -> R<Option<bool>> {
     if seen.contains(name) {
         return Err(e(line_num, "参数重复", name));
     }
@@ -423,7 +476,11 @@ fn parse_bool_arg(seen: &mut HashSet<&'static str>, name: &'static str, line_num
             Ok(Some(true))
         }
         "false" => Ok(None),
-        _ => Err(e(line_num, &format!("{} 的值应为 true 或 false", name), &value)),
+        _ => Err(e(
+            line_num,
+            &format!("{} 的值应为 true 或 false", name),
+            &value,
+        )),
     }
 }
 
@@ -441,7 +498,9 @@ fn parse_zombie_type_arg(
         return Err(e(line_num, "参数重复", name));
     }
     let abbrs = arg_value(line);
-    let contain_chinese = !abbrs.chars().all(|c| c.is_ascii_alphabetic() || c.is_whitespace());
+    let contain_chinese = !abbrs
+        .chars()
+        .all(|c| c.is_ascii_alphabetic() || c.is_whitespace());
     let prev: Vec<i32> = prev_types.map(|p| p.to_vec()).unwrap_or_default();
     let mut types: Vec<i32> = Vec::new();
 
@@ -486,7 +545,11 @@ fn parse_zombie_type_arg(
             return Err(e(line_num, "僵尸类型重复", &abbr));
         }
         if zombie::banned(original_scene).contains(&zombie_type) {
-            return Err(e(line_num, &format!("{}场地无法指定此僵尸类型", original_scene), &abbr));
+            return Err(e(
+                line_num,
+                &format!("{}场地无法指定此僵尸类型", original_scene),
+                &abbr,
+            ));
         }
         types.push(zombie_type);
     }
@@ -519,7 +582,11 @@ fn parse_wave(config: &mut Config, line_num: usize, line: &str) -> R<()> {
         return Err(e(line_num, "波数重复", wave_num_token));
     }
     if prev_wave_num + 1 != wave_num {
-        return Err(e(line_num, &format!("请先设定第 {} 波", prev_wave_num + 1), wave_num_token));
+        return Err(e(
+            line_num,
+            &format!("请先设定第 {} 波", prev_wave_num + 1),
+            wave_num_token,
+        ));
     }
 
     let mut ice_times: Vec<i32> = Vec::new();
@@ -538,7 +605,12 @@ fn parse_wave(config: &mut Config, line_num: usize, line: &str) -> R<()> {
         }
     }
 
-    config.waves.push(Wave { ice_times, wave_length, start_tick, actions: Vec::new() });
+    config.waves.push(Wave {
+        ice_times,
+        wave_length,
+        start_tick,
+        actions: Vec::new(),
+    });
     Ok(())
 }
 
@@ -581,7 +653,11 @@ fn parse_time(line_num: usize, token: &str, prev_time: Option<i32>) -> R<i32> {
 }
 
 /// Parses `time`, `time~shovel`, or `time+shovel` (shovel may itself be relative).
-fn parse_card_time_and_shovel(line_num: usize, token: &str, prev_action_time: Option<i32>) -> R<(i32, Option<i32>)> {
+fn parse_card_time_and_shovel(
+    line_num: usize,
+    token: &str,
+    prev_action_time: Option<i32>,
+) -> R<(i32, Option<i32>)> {
     let plus = token.rfind('+').map(|i| i as isize).unwrap_or(-1);
     let tilde = token.rfind('~').map(|i| i as isize).unwrap_or(-1);
     let delim = plus.max(tilde);
@@ -626,7 +702,10 @@ fn cob_kind(up: &str) -> Option<i32> {
 
 fn parse_cob(config: &mut Config, line_num: usize, line: &str, cob_num: i32) -> R<()> {
     let scene = config.setting.scene.clone();
-    let prev_time = current_wave(config, line_num, line)?.actions.last().map(|a| a.time());
+    let prev_time = current_wave(config, line_num, line)?
+        .actions
+        .last()
+        .map(|a| a.time());
 
     let tokens: Vec<&str> = line.split(' ').collect();
     let symbol = tokens[0];
@@ -644,7 +723,12 @@ fn parse_cob(config: &mut Config, line_num: usize, line: &str, cob_num: i32) -> 
     }
 
     let mut cob_col: Option<i32> = None;
-    if symbol.chars().last().map(|c| c.is_ascii_digit()).unwrap_or(false) {
+    if symbol
+        .chars()
+        .last()
+        .map(|c| c.is_ascii_digit())
+        .unwrap_or(false)
+    {
         if scene != "ME" {
             return Err(e(line_num, "只有屋顶场合可以指定炮尾列", symbol));
         }
@@ -668,7 +752,12 @@ fn parse_cob(config: &mut Config, line_num: usize, line: &str, cob_num: i32) -> 
     let symbol = symbol.to_string();
     current_wave(config, line_num, line)?
         .actions
-        .push(Action::Cob { symbol, time, positions, cob_col });
+        .push(Action::Cob {
+            symbol,
+            time,
+            positions,
+            cob_col,
+        });
     Ok(())
 }
 
@@ -699,7 +788,10 @@ fn parse_cob_rows(line_num: usize, token: &str, cob_num: i32, scene: &str) -> R<
 fn parse_fodder(config: &mut Config, line_num: usize, line: &str) -> R<()> {
     let scene = config.setting.scene.clone();
     let curr_wave_num = config.waves.len() as i32;
-    let prev_time = current_wave(config, line_num, line)?.actions.last().map(|a| a.time());
+    let prev_time = current_wave(config, line_num, line)?
+        .actions
+        .last()
+        .map(|a| a.time());
 
     let tokens: Vec<&str> = line.split(' ').collect();
     let symbol = tokens[0];
@@ -718,17 +810,22 @@ fn parse_fodder(config: &mut Config, line_num: usize, line: &str) -> R<()> {
     let col = parse_card_col(line_num, col_token)?;
 
     let fodders: Vec<Fodder> = rows.iter().map(|(_, card)| *card).collect();
-    let positions: Vec<CardPos> = rows.iter().map(|(row, _)| CardPos { row: *row, col }).collect();
+    let positions: Vec<CardPos> = rows
+        .iter()
+        .map(|(row, _)| CardPos { row: *row, col })
+        .collect();
 
     if symbol == "C" {
         let symbol = symbol.to_string();
-        current_wave(config, line_num, line)?.actions.push(Action::FixedFodder {
-            symbol,
-            time,
-            shovel_time,
-            fodders,
-            positions,
-        });
+        current_wave(config, line_num, line)?
+            .actions
+            .push(Action::FixedFodder {
+                symbol,
+                time,
+                shovel_time,
+                fodders,
+                positions,
+            });
     } else {
         let rows_len = rows_token.chars().count();
         if rows_len < 2 {
@@ -742,15 +839,17 @@ fn parse_fodder(config: &mut Config, line_num: usize, line: &str) -> R<()> {
             curr_wave_num,
         )?;
         let symbol = symbol.to_string();
-        current_wave(config, line_num, line)?.actions.push(Action::SmartFodder {
-            symbol,
-            time,
-            shovel_time,
-            fodders,
-            positions,
-            choose,
-            waves,
-        });
+        current_wave(config, line_num, line)?
+            .actions
+            .push(Action::SmartFodder {
+                symbol,
+                time,
+                shovel_time,
+                fodders,
+                positions,
+                choose,
+                waves,
+            });
     }
     Ok(())
 }
@@ -803,7 +902,11 @@ fn parse_card_col(line_num: usize, token: &str) -> R<i32> {
 fn parse_card_row(line_num: usize, token: &str, scene: &str) -> R<i32> {
     match parse_natural(token) {
         Some(r) if r >= 1 && r <= max_rows(scene) => Ok(r),
-        _ => Err(e(line_num, &format!("用卡行应为 1~{} 内的整数", max_rows(scene)), token)),
+        _ => Err(e(
+            line_num,
+            &format!("用卡行应为 1~{} 内的整数", max_rows(scene)),
+            token,
+        )),
     }
 }
 
@@ -837,7 +940,13 @@ fn parse_fodder_args(
         if key == "choose" {
             match parse_natural(value) {
                 Some(n) if n >= 1 && n <= card_num => choose = Some(n),
-                _ => return Err(e(line_num, &format!("choose 的值应为 1~{} 内的整数", card_num), value)),
+                _ => {
+                    return Err(e(
+                        line_num,
+                        &format!("choose 的值应为 1~{} 内的整数", card_num),
+                        value,
+                    ))
+                }
             }
         } else if key == "waves" {
             let mut ws: Vec<i32> = Vec::new();
@@ -849,12 +958,22 @@ fn parse_fodder_args(
                         }
                         ws.push(n);
                     }
-                    _ => return Err(e(line_num, &format!("waves 的值应为 1~{} 内的整数", curr_wave_num), value)),
+                    _ => {
+                        return Err(e(
+                            line_num,
+                            &format!("waves 的值应为 1~{} 内的整数", curr_wave_num),
+                            value,
+                        ))
+                    }
                 }
             }
             waves = Some(ws);
         } else {
-            return Err(e(line_num, "未知参数", &format!("{} (支持的参数: choose, waves)", key)));
+            return Err(e(
+                line_num,
+                "未知参数",
+                &format!("{} (支持的参数: choose, waves)", key),
+            ));
         }
     }
 
@@ -868,7 +987,10 @@ fn parse_fodder_args(
 
 fn parse_fixed_card(config: &mut Config, line_num: usize, line: &str, plant_type: i32) -> R<()> {
     let scene = config.setting.scene.clone();
-    let prev_time = current_wave(config, line_num, line)?.actions.last().map(|a| a.time());
+    let prev_time = current_wave(config, line_num, line)?
+        .actions
+        .last()
+        .map(|a| a.time());
 
     let tokens: Vec<&str> = line.split(' ').collect();
     let symbol = tokens[0];
@@ -895,19 +1017,24 @@ fn parse_fixed_card(config: &mut Config, line_num: usize, line: &str, plant_type
     let col = parse_card_col(line_num, col_token)?;
     let symbol = symbol.to_string();
 
-    current_wave(config, line_num, line)?.actions.push(Action::FixedCard {
-        symbol,
-        time,
-        shovel_time,
-        plant_type,
-        position: CardPos { row, col },
-    });
+    current_wave(config, line_num, line)?
+        .actions
+        .push(Action::FixedCard {
+            symbol,
+            time,
+            shovel_time,
+            plant_type,
+            position: CardPos { row, col },
+        });
     Ok(())
 }
 
 fn parse_smart_card(config: &mut Config, line_num: usize, line: &str, plant_type: i32) -> R<()> {
     let scene = config.setting.scene.clone();
-    let prev_time = current_wave(config, line_num, line)?.actions.last().map(|a| a.time());
+    let prev_time = current_wave(config, line_num, line)?
+        .actions
+        .last()
+        .map(|a| a.time());
 
     let tokens: Vec<&str> = line.split(' ').collect();
     let symbol = tokens[0];
@@ -932,7 +1059,12 @@ fn parse_smart_card(config: &mut Config, line_num: usize, line: &str, plant_type
 
     current_wave(config, line_num, line)?
         .actions
-        .push(Action::SmartCard { symbol, time, plant_type, positions });
+        .push(Action::SmartCard {
+            symbol,
+            time,
+            plant_type,
+            positions,
+        });
     Ok(())
 }
 
@@ -981,7 +1113,10 @@ fn parse_set(variables: &mut Vec<(String, f64)>, line_num: usize, line: &str) ->
     if expr.is_empty() {
         return Err(e(line_num, "表达式不可为空", line));
     }
-    if !expr.bytes().all(|b| matches!(b, b'0'..=b'9' | b'+' | b'-' | b'*' | b'/' | b'(' | b')')) {
+    if !expr
+        .bytes()
+        .all(|b| matches!(b, b'0'..=b'9' | b'+' | b'-' | b'*' | b'/' | b'(' | b')'))
+    {
         return Err(e(line_num, "表达式只能包含数字、运算符与括号", &expr));
     }
     // The grammar above forbids '.', so every literal is an integer; +/-/* match
@@ -1003,7 +1138,10 @@ fn parse_set(variables: &mut Vec<(String, f64)>, line_num: usize, line: &str) ->
 // --- helpers ----------------------------------------------------------------
 
 fn current_wave<'a>(config: &'a mut Config, line_num: usize, line: &str) -> R<&'a mut Wave> {
-    config.waves.last_mut().ok_or_else(|| e(line_num, "请先设定波次", line))
+    config
+        .waves
+        .last_mut()
+        .ok_or_else(|| e(line_num, "请先设定波次", line))
 }
 
 #[cfg(test)]

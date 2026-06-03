@@ -98,7 +98,14 @@ struct Over {
     min_cs: Option<(Option<i32>, Option<i32>)>,
     flag: Option<FlagMode>,
 }
-const NONE_OVER: Over = Over { dmg_range: None, def_x: None, def_y: None, h: None, min_cs: None, flag: None };
+const NONE_OVER: Over = Over {
+    dmg_range: None,
+    def_x: None,
+    def_y: None,
+    h: None,
+    min_cs: None,
+    flag: None,
+};
 
 // (key, base ZombieType, flag mode for the *primary* row, override). Order matches the sheet.
 struct Spec(&'static str, ZombieType, FlagMode, Over);
@@ -128,19 +135,91 @@ fn specs() -> Vec<Spec> {
         Spec("flag", Flag, FlagOnly, NONE_OVER),
         // Terrain / state variants reuse a base position column with tweaks; each keeps its
         // base zombie's flag behavior (availability is driven by min_cs per wave).
-        Spec("duck", Regular, Offset(40), Over { h: Some(-40), ..NONE_OVER }),
-        Spec("duck_dc_fast", DCFast, Offset(40), Over { h: Some(-40), ..NONE_OVER }),
-        Spec("duck_dc_slow", DCSlow, Offset(40), Over { h: Some(-40), ..NONE_OVER }),
-        Spec("snorkel_ashore", Snorkel, Column("snorkel_flag"), Over { h: Some(0), ..NONE_OVER }),
-        Spec("digger_reverse", Digger, Column("digger_flag"), Over {
-            dmg_range: Some((9, 758)), def_x: Some((42, 70)),
-            min_cs: Some((Some(1358), Some(1419))), ..NONE_OVER }),
-        Spec("duck_flag", Flag, FlagOnly, Over { h: Some(-40), ..NONE_OVER }),
-        Spec("dolphin_swim", DolphinRider, Column("dolphin_flag"), Over {
-            dmg_range: Some((-99, 780)), def_x: Some((20, 62)), ..NONE_OVER }),
-        Spec("balloon_ground", Balloon, Offset(40), Over { h: Some(0), ..NONE_OVER }),
-        Spec("pogo_walk", Pogo, Offset(40), Over {
-            def_y: Some((17, 132)), h: Some(16), ..NONE_OVER }),
+        Spec(
+            "duck",
+            Regular,
+            Offset(40),
+            Over {
+                h: Some(-40),
+                ..NONE_OVER
+            },
+        ),
+        Spec(
+            "duck_dc_fast",
+            DCFast,
+            Offset(40),
+            Over {
+                h: Some(-40),
+                ..NONE_OVER
+            },
+        ),
+        Spec(
+            "duck_dc_slow",
+            DCSlow,
+            Offset(40),
+            Over {
+                h: Some(-40),
+                ..NONE_OVER
+            },
+        ),
+        Spec(
+            "snorkel_ashore",
+            Snorkel,
+            Column("snorkel_flag"),
+            Over {
+                h: Some(0),
+                ..NONE_OVER
+            },
+        ),
+        Spec(
+            "digger_reverse",
+            Digger,
+            Column("digger_flag"),
+            Over {
+                dmg_range: Some((9, 758)),
+                def_x: Some((42, 70)),
+                min_cs: Some((Some(1358), Some(1419))),
+                ..NONE_OVER
+            },
+        ),
+        Spec(
+            "duck_flag",
+            Flag,
+            FlagOnly,
+            Over {
+                h: Some(-40),
+                ..NONE_OVER
+            },
+        ),
+        Spec(
+            "dolphin_swim",
+            DolphinRider,
+            Column("dolphin_flag"),
+            Over {
+                dmg_range: Some((-99, 780)),
+                def_x: Some((20, 62)),
+                ..NONE_OVER
+            },
+        ),
+        Spec(
+            "balloon_ground",
+            Balloon,
+            Offset(40),
+            Over {
+                h: Some(0),
+                ..NONE_OVER
+            },
+        ),
+        Spec(
+            "pogo_walk",
+            Pogo,
+            Offset(40),
+            Over {
+                def_y: Some((17, 132)),
+                h: Some(16),
+                ..NONE_OVER
+            },
+        ),
     ]
 }
 
@@ -169,8 +248,15 @@ pub fn select<'a>(filter: Option<&str>) -> Vec<&'a Variant> {
     match filter {
         None => VARIANTS.iter().collect(),
         Some(f) => {
-            let wanted: Vec<&str> = f.split(',').map(|s| s.trim()).filter(|s| !s.is_empty()).collect();
-            VARIANTS.iter().filter(|v| wanted.contains(&v.key)).collect()
+            let wanted: Vec<&str> = f
+                .split(',')
+                .map(|s| s.trim())
+                .filter(|s| !s.is_empty())
+                .collect();
+            VARIANTS
+                .iter()
+                .filter(|v| wanted.contains(&v.key))
+                .collect()
         }
     }
 }
@@ -182,8 +268,16 @@ mod tests {
     #[test]
     fn position_lookup_matches_sheet() {
         // 原速极快!W (gargantuar) values read off the workbook.
-        assert!((FAST.x_at("gargantuar", 618) - 719.94).abs() < 0.01, "{}", FAST.x_at("gargantuar", 618));
-        assert!((FAST.x_at("gargantuar", 685) - 718.947).abs() < 0.01, "{}", FAST.x_at("gargantuar", 685));
+        assert!(
+            (FAST.x_at("gargantuar", 618) - 719.94).abs() < 0.01,
+            "{}",
+            FAST.x_at("gargantuar", 618)
+        );
+        assert!(
+            (FAST.x_at("gargantuar", 685) - 718.947).abs() < 0.01,
+            "{}",
+            FAST.x_at("gargantuar", 685)
+        );
         assert_eq!(FAST.x_at("gargantuar", 0), 845.0);
         assert_eq!(SLOW.x_at("gargantuar", 0), 854.0);
     }

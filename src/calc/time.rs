@@ -3,11 +3,11 @@
 //! during which the cob collects each zombie variant in that row.
 
 use super::{median, wave_lookup, ExplodeKind, SceneArg, Wave};
-use crate::tables::{self, FAST, SLOW};
 #[cfg(feature = "en")]
 use crate::lang::en::*;
 #[cfg(feature = "zh")]
 use crate::lang::zh::*;
+use crate::tables::{self, FAST, SLOW};
 
 struct Explosion {
     x: f64,
@@ -49,9 +49,7 @@ fn explosion(
     let hit_rows: Vec<i32> = ((row - span).max(1)..=(row + span).min(maxrow)).collect();
 
     let (x, y) = match (kind, scene) {
-        (ExplodeKind::Doom, _) => {
-            (round_x(col), 120.0 + (row as f64 - 1.0) * row_height)
-        }
+        (ExplodeKind::Doom, _) => (round_x(col), 120.0 + (row as f64 - 1.0) * row_height),
         (ExplodeKind::Cob, SceneArg::De) | (ExplodeKind::Cob, SceneArg::Pe) => {
             (cob_x(col), 120.0 + (row as f64 - 1.0) * row_height)
         }
@@ -65,7 +63,14 @@ fn explosion(
     };
     let start_y = if scene == SceneArg::Re { 40.0 } else { 50.0 };
     let spacing = if scene == SceneArg::De { 100.0 } else { 85.0 };
-    Ok(Explosion { x, y, radius, hit_rows, start_y, spacing })
+    Ok(Explosion {
+        x,
+        y,
+        radius,
+        hit_rows,
+        start_y,
+        spacing,
+    })
 }
 
 fn round_x(col: f64) -> f64 {
@@ -131,7 +136,10 @@ fn roof_cob_xy(col: f64, row: i32, tail: i32) -> (f64, f64) {
 
 // largest t with raw[t] >= thr (descending column); None if no entry qualifies.
 fn latest_cs_ge(raw: &[f32], thr: f64) -> Option<i32> {
-    (0..raw.len()).rev().find(|&t| raw[t] as f64 >= thr).map(|t| t as i32)
+    (0..raw.len())
+        .rev()
+        .find(|&t| raw[t] as f64 >= thr)
+        .map(|t| t as i32)
 }
 // smallest t with raw[t] < thr (descending column); len if none.
 fn first_cs_lt(raw: &[f32], thr: f64) -> i32 {
@@ -181,7 +189,11 @@ pub fn run(
         wave_name,
         ex.x,
         ex.y,
-        ex.hit_rows.iter().map(|r| r.to_string()).collect::<Vec<_>>().join(",")
+        ex.hit_rows
+            .iter()
+            .map(|r| r.to_string())
+            .collect::<Vec<_>>()
+            .join(",")
     );
     print!("  {:<16}", TIME_HDR_ZOMBIE);
     for r in &ex.hit_rows {
@@ -216,7 +228,9 @@ pub fn run(
                 cells.push("—".to_string());
                 continue;
             }
-            let reach = (ex.radius * ex.radius - ydist_max * ydist_max).sqrt().trunc();
+            let reach = (ex.radius * ex.radius - ydist_max * ydist_max)
+                .sqrt()
+                .trunc();
 
             let coord_min_raw = ex.x - reach - v.def_x.1 as f64; // C32 (B8 - reach - defx_r)
             if coord_min_raw < dmg_lo {
@@ -225,8 +239,16 @@ pub fn run(
             }
             let coord_min = median(dmg_lo, dmg_hi, coord_min_raw.max(dmg_lo)); // already >= dmg_lo
             let coord_max = (ex.x + reach - v.def_x.0 as f64).min(dmg_hi); // C38
-            let cm = if coord_min < 0.0 { coord_min - 1.0 } else { coord_min };
-            let c_big = if coord_max < 0.0 { coord_max - 1.0 } else { coord_max };
+            let cm = if coord_min < 0.0 {
+                coord_min - 1.0
+            } else {
+                coord_min
+            };
+            let c_big = if coord_max < 0.0 {
+                coord_max - 1.0
+            } else {
+                coord_max
+            };
 
             let t_lo = first_cs_lt(slow, c_big + 0.9999 - off);
             let Some(t_hi) = latest_cs_ge(fast, cm - off) else {

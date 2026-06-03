@@ -6,11 +6,11 @@
 //! and the miner (矿工) together — for back/front yard (收二/收三) and roof per cob column.
 
 use super::{fmt_col, fmt_range, Equiv};
-use crate::tables::{FAST, SLOW};
 #[cfg(feature = "en")]
 use crate::lang::en::*;
 #[cfg(feature = "zh")]
 use crate::lang::zh::*;
+use crate::tables::{FAST, SLOW};
 
 // back/front collect offsets: (zomboni_lo_off, zomboni_hi_off, miner_lo_off, miner_hi_off)
 const BACK2: (i32, i32, i32, i32) = (107, 274, 57, 199);
@@ -109,10 +109,7 @@ pub fn run(transition: i32, wave_len: i32, ice: i32, equiv: Equiv) -> Result<(),
     // roof: single cob-landing column to hit zomboni at the row above/same/below, per cob col.
     println!(
         "  {} {:<8} {:<8} {}",
-        IPP_ROOF,
-        IPP_ABOVE,
-        IPP_SAME,
-        IPP_BELOW
+        IPP_ROOF, IPP_ABOVE, IPP_SAME, IPP_BELOW
     );
     let labels = ["1", "2", "3", "4", "5", "6", "7/8"];
     for i in 0..7 {

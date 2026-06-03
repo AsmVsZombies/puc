@@ -1,5 +1,5 @@
-pub mod common;
 mod calculate_pos_distribution;
+pub mod common;
 mod parse_data;
 
 pub use common::{ZombieData, ZombieType};

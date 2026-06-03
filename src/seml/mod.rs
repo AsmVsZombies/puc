@@ -44,14 +44,14 @@ impl SemlType {
     }
 }
 
-pub fn run(kind: SemlType, file: &Path) -> Result<(), String> {
+pub fn run(kind: SemlType, file: &Path, compact: bool) -> Result<(), String> {
     let text = std::fs::read_to_string(file)
         .map_err(|err| format!("无法读取文件 {}: {}", file.display(), err))?;
 
     let parsed = parser::parse(&text)?;
 
-    let scenario = serde_json::to_string(&parsed.config)
-        .map_err(|err| format!("序列化场景失败: {}", err))?;
+    let scenario =
+        serde_json::to_string(&parsed.config).map_err(|err| format!("序列化场景失败: {}", err))?;
     let params_json = build_params(kind, &parsed.params).to_string();
 
     let result = pvz_emulator_sys::run(kind.as_str(), &scenario, &params_json)?;
@@ -59,11 +59,11 @@ pub fn run(kind: SemlType, file: &Path) -> Result<(), String> {
         serde_json::from_str(&result).map_err(|err| format!("解析模拟结果失败: {}", err))?;
 
     match kind {
-        SemlType::Pos => format::pos(&value, &parsed.params),
-        SemlType::Smash => format::smash(&value, &parsed.params),
-        SemlType::Explode => format::explode(&value, &parsed.params),
-        SemlType::Refresh => format::refresh(&value, &parsed.params),
-        SemlType::Pogo => format::pogo(&value, &parsed.params),
+        SemlType::Pos => format::pos(&value, &parsed.params, compact),
+        SemlType::Smash => format::smash(&value, &parsed.params, compact),
+        SemlType::Explode => format::explode(&value, &parsed.params, compact),
+        SemlType::Refresh => format::refresh(&value, &parsed.params, compact),
+        SemlType::Pogo => format::pogo(&value, &parsed.params, compact),
     }
     Ok(())
 }
@@ -82,7 +82,10 @@ fn build_params(kind: SemlType, p: &Params) -> Value {
     }
     match kind {
         SemlType::Pos => {
-            obj.insert("zombies".into(), json!(p.zombies.clone().unwrap_or_default()));
+            obj.insert(
+                "zombies".into(),
+                json!(p.zombies.clone().unwrap_or_default()),
+            );
             if let Some(x) = p.target_x {
                 obj.insert("targetX".into(), json!(x));
             }
@@ -92,7 +95,10 @@ fn build_params(kind: SemlType, p: &Params) -> Value {
             obj.insert("disableCobDelay".into(), json!(disable_cob_delay(p)));
         }
         SemlType::Refresh => {
-            obj.insert("require".into(), json!(p.require.clone().unwrap_or_default()));
+            obj.insert(
+                "require".into(),
+                json!(p.require.clone().unwrap_or_default()),
+            );
             obj.insert("ban".into(), json!(p.ban.clone().unwrap_or_default()));
             obj.insert("huge".into(), json!(p.huge.unwrap_or(false)));
             obj.insert("activate".into(), json!(p.activate.unwrap_or(false)));

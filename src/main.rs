@@ -68,6 +68,9 @@ enum Command {
         r#type: SemlType,
         /// seml 文件路径
         file: PathBuf,
+        /// Compact output: omit verbose breakdowns; long tick tables show every 50cs plus endpoints
+        #[arg(long)]
+        compact: bool,
     },
     /// 热过渡: garg coordinate + car/miner collect columns across the transition
     Ipp {
@@ -106,12 +109,21 @@ fn parse_x_override(s: &str) -> Result<(i32, i32), String> {
     let parts: Vec<&str> = s.split(',').collect();
     match parts.as_slice() {
         [a] => {
-            let v = a.trim().parse::<i32>().map_err(|_| format!("bad --x: {}", s))?;
+            let v = a
+                .trim()
+                .parse::<i32>()
+                .map_err(|_| format!("bad --x: {}", s))?;
             Ok((v, v))
         }
         [a, b] => {
-            let lo = a.trim().parse::<i32>().map_err(|_| format!("bad --x: {}", s))?;
-            let hi = b.trim().parse::<i32>().map_err(|_| format!("bad --x: {}", s))?;
+            let lo = a
+                .trim()
+                .parse::<i32>()
+                .map_err(|_| format!("bad --x: {}", s))?;
+            let hi = b
+                .trim()
+                .parse::<i32>()
+                .map_err(|_| format!("bad --x: {}", s))?;
             if lo > hi {
                 return Err(format!("bad --x: min > max ({})", s));
             }
@@ -124,21 +136,54 @@ fn parse_x_override(s: &str) -> Result<(i32, i32), String> {
 fn run_calc(command: Command) -> Result<(), String> {
     match command {
         Command::Intercept { .. } => unreachable!(),
-        Command::Coord { time, wave, kind, scene, roof_tail, x, zombies } => {
+        Command::Coord {
+            time,
+            wave,
+            kind,
+            scene,
+            roof_tail,
+            x,
+            zombies,
+        } => {
             let x_override = x.as_deref().map(parse_x_override).transpose()?;
-            calc::coord::run(time, wave, kind, scene, roof_tail, x_override, zombies.as_deref())
+            calc::coord::run(
+                time,
+                wave,
+                kind,
+                scene,
+                roof_tail,
+                x_override,
+                zombies.as_deref(),
+            )
         }
-        Command::Time { scene, kind, row, col, wave, roof_tail, zombies } => {
-            calc::time::run(scene, kind, row, col, wave, roof_tail, zombies.as_deref())
-        }
+        Command::Time {
+            scene,
+            kind,
+            row,
+            col,
+            wave,
+            roof_tail,
+            zombies,
+        } => calc::time::run(scene, kind, row, col, wave, roof_tail, zombies.as_deref()),
         Command::Extreme { mode } => match mode {
             ExtremeMode::Slow { walk } => calc::extreme::run_slow(&walk),
-            ExtremeMode::Fast { walk, ladder, clown } => calc::extreme::run_fast(&walk, ladder, clown),
+            ExtremeMode::Fast {
+                walk,
+                ladder,
+                clown,
+            } => calc::extreme::run_fast(&walk, ladder, clown),
         },
-        Command::Ipp { transition, wave_len, ice, equiv } => {
-            calc::ipp::run(transition, wave_len, ice, equiv)
-        }
-        Command::Seml { r#type, file } => seml::run(r#type, &file),
+        Command::Ipp {
+            transition,
+            wave_len,
+            ice,
+            equiv,
+        } => calc::ipp::run(transition, wave_len, ice, equiv),
+        Command::Seml {
+            r#type,
+            file,
+            compact,
+        } => seml::run(r#type, &file, compact),
     }
 }
 

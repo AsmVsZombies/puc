@@ -88,7 +88,10 @@ fn add_cpp_glob(build: &mut cc::Build, dir: &Path) {
 // Emits rerun-if-changed for every file under `root` (cc only tracks the .cpp it
 // compiles, not the headers they include).
 fn rerun_if_tree_changed(root: &Path) {
-    for entry in glob::glob(&format!("{}/**/*", root.display())).expect("bad glob").flatten() {
+    for entry in glob::glob(&format!("{}/**/*", root.display()))
+        .expect("bad glob")
+        .flatten()
+    {
         if entry.is_file() {
             println!("cargo:rerun-if-changed={}", entry.display());
         }

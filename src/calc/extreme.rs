@@ -7,11 +7,11 @@
 //! 正好不伤 (just-not-hitting) column.
 
 use super::fmt_col;
-use crate::tables::{FAST, SLOW};
 #[cfg(feature = "en")]
 use crate::lang::en::*;
 #[cfg(feature = "zh")]
 use crate::lang::zh::*;
+use crate::tables::{FAST, SLOW};
 
 const PLANT_DEF_RIGHT_SLOW: f64 = 854.0; // 植物防御域右限, 最慢巨人 (F2)
 const PLANT_DEF_RIGHT_FAST: f64 = 845.0; // 最快巨人 (E3)
@@ -53,7 +53,12 @@ pub fn run_fast(walk: &[i32], ladder: Option<i32>, clown: Option<i32>) -> Result
     if walk.is_empty() {
         return Err(EXTREME_NEED_WALK.to_string());
     }
-    if walk.iter().chain(ladder.iter()).chain(clown.iter()).any(|&t| t < 0) {
+    if walk
+        .iter()
+        .chain(ladder.iter())
+        .chain(clown.iter())
+        .any(|&t| t < 0)
+    {
         return Err(CALC_BAD_TIME.to_string());
     }
     // fastest garg(s) stacked: coord = right_limit - sum(advance_i).
@@ -74,10 +79,16 @@ pub fn run_fast(walk: &[i32], ladder: Option<i32>, clown: Option<i32>) -> Result
         fmt_col(just_safe),
     );
     if let Some(l) = ladder {
-        line.push_str(&format!(" ladder_coord={}", fmt_col(FAST.x_at("ladder", l) as f64)));
+        line.push_str(&format!(
+            " ladder_coord={}",
+            fmt_col(FAST.x_at("ladder", l) as f64)
+        ));
     }
     if let Some(c) = clown {
-        line.push_str(&format!(" clown_coord={}", fmt_col(FAST.x_at("jack", c) as f64)));
+        line.push_str(&format!(
+            " clown_coord={}",
+            fmt_col(FAST.x_at("jack", c) as f64)
+        ));
     }
     println!("{}", line);
     Ok(())

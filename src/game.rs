@@ -682,7 +682,8 @@ fn judge_internal(
     } else {
         imp_velocity_y = lowerbound;
     }
-    let imp_spawn_time = constants::IMP_SPAWN_TIME_OF_SLOW_CD_AT_COB_TIME[cmp::max(0, cmp::min(210, iced)) as usize];
+    let imp_spawn_time =
+        constants::IMP_SPAWN_TIME_OF_SLOW_CD_AT_COB_TIME[cmp::max(0, cmp::min(210, iced)) as usize];
     let y_shift = |x: f32, roof: bool| {
         if !roof || x >= 400. {
             0.
@@ -724,7 +725,8 @@ fn judge_internal(
                 if imp.position.h <= 0. {
                     imp.position.h = 0.;
                     imp.state = ImpState::S72 {
-                        countdown: constants::IMP_S72_TIME_OF_SLOW_CD_AT_BIRTH[cmp::max(0, cmp::min(51, imp.chill_cd)) as usize]
+                        countdown: constants::IMP_S72_TIME_OF_SLOW_CD_AT_BIRTH
+                            [cmp::max(0, cmp::min(51, imp.chill_cd)) as usize],
                     }
                 }
             }

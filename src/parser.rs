@@ -21,9 +21,7 @@ enum EvalError {
 
 fn eval_as_i32(expr: &str, ctx: &mut HashMapContext) -> Result<i32, EvalError> {
     match eval_with_context_mut(expr, ctx) {
-        Ok(Value::Int(v)) => {
-            i32::try_from(v).map_err(|_| EvalError::Type(v.to_string()))
-        }
+        Ok(Value::Int(v)) => i32::try_from(v).map_err(|_| EvalError::Type(v.to_string())),
         Ok(Value::Float(f)) => {
             let r = f.round();
             if (f - r).abs() < 1e-6 {
@@ -116,42 +114,37 @@ impl Parser {
 
     pub fn parse_wave(&mut self, input: &str) -> ParseResult {
         match input.split_whitespace().collect::<Vec<&str>>().as_slice() {
-            ["wave", extra_args @ ..] => {
-                match extra_args {
-                    [] => {
-                        printer::print_wave_status(&self.ice_and_cob_times, self.min_max_garg_x);
-                        ParseResult::Ok
-                    }
-                    [ice_times @ .., cob_time] => {
-                        let (Ok(ice_times), Ok(cob_time)) = (
-                            Parser::parse_ice_times(ice_times, &mut self.eval_context),
-                            Parser::parse_cob_time(cob_time, &mut self.eval_context),
-                        ) else {
-                            return ParseResult::Err;
-                        };
-                        match game::IceAndCobTimes::of_ice_times_and_cob_time(&ice_times, cob_time)
-                        {
+            ["wave", extra_args @ ..] => match extra_args {
+                [] => {
+                    printer::print_wave_status(&self.ice_and_cob_times, self.min_max_garg_x);
+                    ParseResult::Ok
+                }
+                [ice_times @ .., cob_time] => {
+                    let (Ok(ice_times), Ok(cob_time)) = (
+                        Parser::parse_ice_times(ice_times, &mut self.eval_context),
+                        Parser::parse_cob_time(cob_time, &mut self.eval_context),
+                    ) else {
+                        return ParseResult::Err;
+                    };
+                    match game::IceAndCobTimes::of_ice_times_and_cob_time(&ice_times, cob_time) {
+                        Err(err) => {
+                            printer::print_error(err.as_str());
+                            ParseResult::Err
+                        }
+                        Ok(ice_and_cob_times) => match game::min_max_garg_x(&ice_and_cob_times) {
                             Err(err) => {
                                 printer::print_error(err.as_str());
                                 ParseResult::Err
                             }
-                            Ok(ice_and_cob_times) => {
-                                match game::min_max_garg_x(&ice_and_cob_times) {
-                                    Err(err) => {
-                                        printer::print_error(err.as_str());
-                                        ParseResult::Err
-                                    }
-                                    Ok((min_x, max_x)) => {
-                                        self.ice_and_cob_times = ice_and_cob_times;
-                                        self.min_max_garg_x = (min_x, max_x);
-                                        ParseResult::Ok
-                                    }
-                                }
+                            Ok((min_x, max_x)) => {
+                                self.ice_and_cob_times = ice_and_cob_times;
+                                self.min_max_garg_x = (min_x, max_x);
+                                ParseResult::Ok
                             }
-                        }
+                        },
                     }
                 }
-            }
+            },
             _ => ParseResult::Unmatched,
         }
     }
@@ -186,7 +179,11 @@ impl Parser {
                             }
                             [hit_row, hit_col, ">", garg_pos_args @ ..] if *command == "delay" => {
                                 let (Ok(hit_row), Ok(hit_col)) = (
-                                    Parser::parse_hit_row(hit_row, &self.scene.all_rows(), &mut self.eval_context),
+                                    Parser::parse_hit_row(
+                                        hit_row,
+                                        &self.scene.all_rows(),
+                                        &mut self.eval_context,
+                                    ),
                                     Parser::parse_hit_col(hit_col, &mut self.eval_context),
                                 ) else {
                                     return ParseResult::Err;
@@ -219,7 +216,9 @@ impl Parser {
                                 return ParseResult::Err;
                             }
                             [hit_col] => {
-                                let Ok(hit_col) = Parser::parse_hit_col(hit_col, &mut self.eval_context) else {
+                                let Ok(hit_col) =
+                                    Parser::parse_hit_col(hit_col, &mut self.eval_context)
+                                else {
                                     return ParseResult::Err;
                                 };
                                 (
@@ -266,7 +265,11 @@ impl Parser {
                                 if *command == "delay" =>
                             {
                                 let (Ok(hit_row), Ok(hit_col), Ok(cob_col)) = (
-                                    Parser::parse_hit_row(hit_row, &self.scene.all_rows(), &mut self.eval_context),
+                                    Parser::parse_hit_row(
+                                        hit_row,
+                                        &self.scene.all_rows(),
+                                        &mut self.eval_context,
+                                    ),
                                     Parser::parse_hit_col(hit_col, &mut self.eval_context),
                                     Parser::parse_cob_col(cob_col, &mut self.eval_context),
                                 ) else {
@@ -394,7 +397,11 @@ impl Parser {
                 }
                 [doom_row, doom_col, garg_pos_args @ ..] => {
                     let (Ok(doom_row), Ok(doom_col)) = (
-                        Parser::parse_doom_row(doom_row, &self.scene.all_rows(), &mut self.eval_context),
+                        Parser::parse_doom_row(
+                            doom_row,
+                            &self.scene.all_rows(),
+                            &mut self.eval_context,
+                        ),
                         Parser::parse_doom_col(doom_col, &mut self.eval_context),
                     ) else {
                         return ParseResult::Err;
@@ -473,7 +480,9 @@ impl Parser {
                     match extra_args {
                         [] => (self.min_max_garg_x, self.scene.cob_dist(None)),
                         [delay_time] => {
-                            let Ok(delay_time) = Parser::parse_delay_time(delay_time, &mut self.eval_context) else {
+                            let Ok(delay_time) =
+                                Parser::parse_delay_time(delay_time, &mut self.eval_context)
+                            else {
                                 return ParseResult::Err;
                             };
                             match game::IceAndCobTimes::of_ice_times_and_cob_time(
@@ -513,7 +522,9 @@ impl Parser {
                             return ParseResult::Err;
                         }
                         [cob_col] => {
-                            let Ok(cob_col) = Parser::parse_cob_col(cob_col, &mut self.eval_context) else {
+                            let Ok(cob_col) =
+                                Parser::parse_cob_col(cob_col, &mut self.eval_context)
+                            else {
                                 return ParseResult::Err;
                             };
                             (self.min_max_garg_x, self.scene.cob_dist(Some(cob_col)))
@@ -573,112 +584,127 @@ impl Parser {
     pub fn parse_find_max_delay(&mut self, input: &str) -> ParseResult {
         match input.split_whitespace().collect::<Vec<&str>>().as_slice() {
             ["max", extra_args @ ..] => {
-                let (cob_list, garg_rows, mut min_max_garg_x, ice_flag, hit_row, cob_col_opt) = if !self.scene.is_roof() {
-                    match extra_args {
-                        [] | [">", ..] => {
-                            printer::print_error(NEED_HIT_ROW_HIT_COL_RANGE);
-                            return ParseResult::Err;
-                        }
-                        [_] | [_, ">", ..] => {
-                            printer::print_error(NEED_HIT_COL_RANGE);
-                            return ParseResult::Err;
-                        }
-                        [hit_row, min_max_hit_col, ">", garg_pos_args @ ..] => {
-                            let (Ok(hit_row), Ok((min_hit_col, max_hit_col))) = (
-                                Parser::parse_hit_row(hit_row, &self.scene.all_rows(), &mut self.eval_context),
-                                Parser::parse_min_max_hit_col(min_max_hit_col, &mut self.eval_context),
-                            ) else {
+                let (cob_list, garg_rows, mut min_max_garg_x, ice_flag, hit_row, cob_col_opt) =
+                    if !self.scene.is_roof() {
+                        match extra_args {
+                            [] | [">", ..] => {
+                                printer::print_error(NEED_HIT_ROW_HIT_COL_RANGE);
                                 return ParseResult::Err;
-                            };
-                            let Ok(ParsedGargPos {
-                                garg_rows,
-                                min_max_garg_x,
-                                ice_flag,
-                            }) = Parser::parse_garg_pos(
-                                garg_pos_args,
-                                &self.scene.garg_rows_for_cob(hit_row),
-                                &mut self.eval_context,
-                            )
-                            else {
+                            }
+                            [_] | [_, ">", ..] => {
+                                printer::print_error(NEED_HIT_COL_RANGE);
                                 return ParseResult::Err;
-                            };
-                            (
-                                ((min_hit_col * 80.).round() as i32
-                                    ..=(max_hit_col * 80.).round() as i32)
-                                    .map(|v| game::Cob::Ground {
-                                        row: hit_row,
-                                        col: v as f32 / 80.,
-                                    })
-                                    .collect::<Vec<game::Cob>>(),
-                                garg_rows,
-                                min_max_garg_x.unwrap_or(self.min_max_garg_x),
-                                ice_flag.unwrap_or(self.ice_and_cob_times.is_iced()),
-                                hit_row,
-                                None,
-                            )
-                        }
-                        _ => {
-                            printer::print_bad_format_error();
-                            return ParseResult::Err;
-                        }
-                    }
-                } else {
-                    match extra_args {
-                        [] | [">", ..] => {
-                            printer::print_error(NEED_HIT_ROW_HIT_COL_RANGE_COB_COL);
-                            return ParseResult::Err;
-                        }
-                        [_] | [_, ">", ..] => {
-                            printer::print_error(NEED_HIT_COL_RANGE_COB_COL);
-                            return ParseResult::Err;
-                        }
-                        [_, _] | [_, _, ">", ..] => {
-                            printer::print_error(NEED_COB_COL);
-                            return ParseResult::Err;
-                        }
-                        [hit_row, min_max_hit_col, cob_col, ">", garg_pos_args @ ..] => {
-                            let (Ok(hit_row), Ok((min_hit_col, max_hit_col)), Ok(cob_col)) = (
-                                Parser::parse_hit_row(hit_row, &self.scene.all_rows(), &mut self.eval_context),
-                                Parser::parse_min_max_hit_col(min_max_hit_col, &mut self.eval_context),
-                                Parser::parse_cob_col(cob_col, &mut self.eval_context),
-                            ) else {
+                            }
+                            [hit_row, min_max_hit_col, ">", garg_pos_args @ ..] => {
+                                let (Ok(hit_row), Ok((min_hit_col, max_hit_col))) = (
+                                    Parser::parse_hit_row(
+                                        hit_row,
+                                        &self.scene.all_rows(),
+                                        &mut self.eval_context,
+                                    ),
+                                    Parser::parse_min_max_hit_col(
+                                        min_max_hit_col,
+                                        &mut self.eval_context,
+                                    ),
+                                ) else {
+                                    return ParseResult::Err;
+                                };
+                                let Ok(ParsedGargPos {
+                                    garg_rows,
+                                    min_max_garg_x,
+                                    ice_flag,
+                                }) = Parser::parse_garg_pos(
+                                    garg_pos_args,
+                                    &self.scene.garg_rows_for_cob(hit_row),
+                                    &mut self.eval_context,
+                                )
+                                else {
+                                    return ParseResult::Err;
+                                };
+                                (
+                                    ((min_hit_col * 80.).round() as i32
+                                        ..=(max_hit_col * 80.).round() as i32)
+                                        .map(|v| game::Cob::Ground {
+                                            row: hit_row,
+                                            col: v as f32 / 80.,
+                                        })
+                                        .collect::<Vec<game::Cob>>(),
+                                    garg_rows,
+                                    min_max_garg_x.unwrap_or(self.min_max_garg_x),
+                                    ice_flag.unwrap_or(self.ice_and_cob_times.is_iced()),
+                                    hit_row,
+                                    None,
+                                )
+                            }
+                            _ => {
+                                printer::print_bad_format_error();
                                 return ParseResult::Err;
-                            };
-                            let Ok(ParsedGargPos {
-                                garg_rows,
-                                min_max_garg_x,
-                                ice_flag,
-                            }) = Parser::parse_garg_pos(
-                                garg_pos_args,
-                                &self.scene.garg_rows_for_cob(hit_row),
-                                &mut self.eval_context,
-                            )
-                            else {
+                            }
+                        }
+                    } else {
+                        match extra_args {
+                            [] | [">", ..] => {
+                                printer::print_error(NEED_HIT_ROW_HIT_COL_RANGE_COB_COL);
                                 return ParseResult::Err;
-                            };
-                            (
-                                ((min_hit_col * 80.).round() as i32
-                                    ..=(max_hit_col * 80.).round() as i32)
-                                    .map(|v| game::Cob::Roof {
-                                        row: hit_row,
-                                        col: v as f32 / 80.,
-                                        cob_col,
-                                        cob_row: DEFAULT_ROOF_COB_ROW,
-                                    })
-                                    .collect::<Vec<game::Cob>>(),
-                                garg_rows,
-                                min_max_garg_x.unwrap_or(self.min_max_garg_x),
-                                ice_flag.unwrap_or(self.ice_and_cob_times.is_iced()),
-                                hit_row,
-                                Some(cob_col),
-                            )
+                            }
+                            [_] | [_, ">", ..] => {
+                                printer::print_error(NEED_HIT_COL_RANGE_COB_COL);
+                                return ParseResult::Err;
+                            }
+                            [_, _] | [_, _, ">", ..] => {
+                                printer::print_error(NEED_COB_COL);
+                                return ParseResult::Err;
+                            }
+                            [hit_row, min_max_hit_col, cob_col, ">", garg_pos_args @ ..] => {
+                                let (Ok(hit_row), Ok((min_hit_col, max_hit_col)), Ok(cob_col)) = (
+                                    Parser::parse_hit_row(
+                                        hit_row,
+                                        &self.scene.all_rows(),
+                                        &mut self.eval_context,
+                                    ),
+                                    Parser::parse_min_max_hit_col(
+                                        min_max_hit_col,
+                                        &mut self.eval_context,
+                                    ),
+                                    Parser::parse_cob_col(cob_col, &mut self.eval_context),
+                                ) else {
+                                    return ParseResult::Err;
+                                };
+                                let Ok(ParsedGargPos {
+                                    garg_rows,
+                                    min_max_garg_x,
+                                    ice_flag,
+                                }) = Parser::parse_garg_pos(
+                                    garg_pos_args,
+                                    &self.scene.garg_rows_for_cob(hit_row),
+                                    &mut self.eval_context,
+                                )
+                                else {
+                                    return ParseResult::Err;
+                                };
+                                (
+                                    ((min_hit_col * 80.).round() as i32
+                                        ..=(max_hit_col * 80.).round() as i32)
+                                        .map(|v| game::Cob::Roof {
+                                            row: hit_row,
+                                            col: v as f32 / 80.,
+                                            cob_col,
+                                            cob_row: DEFAULT_ROOF_COB_ROW,
+                                        })
+                                        .collect::<Vec<game::Cob>>(),
+                                    garg_rows,
+                                    min_max_garg_x.unwrap_or(self.min_max_garg_x),
+                                    ice_flag.unwrap_or(self.ice_and_cob_times.is_iced()),
+                                    hit_row,
+                                    Some(cob_col),
+                                )
+                            }
+                            _ => {
+                                printer::print_bad_format_error();
+                                return ParseResult::Err;
+                            }
                         }
-                        _ => {
-                            printer::print_bad_format_error();
-                            return ParseResult::Err;
-                        }
-                    }
-                };
+                    };
                 if cob_list.is_empty() {
                     return ParseResult::Err;
                 }
@@ -770,7 +796,12 @@ impl Parser {
                 ["garg", imp_x] => {
                     let is_roof = self.scene.is_roof();
                     let (min_valid_imp_x, max_valid_imp_x) = constants::imp_x_bounds(is_roof);
-                    match imp_x.replace('，', ",").split(',').collect::<Vec<&str>>().as_slice() {
+                    match imp_x
+                        .replace('，', ",")
+                        .split(',')
+                        .collect::<Vec<&str>>()
+                        .as_slice()
+                    {
                         [single_imp_x] => {
                             let imp_x = match eval_as_i32(single_imp_x, &mut self.eval_context) {
                                 Ok(v) => v,
@@ -838,11 +869,13 @@ impl Parser {
                                 );
                                 return ParseResult::Err;
                             }
-                            let Some((range_min, range_max)) = constants::union_min_max_garg_pos_of_imp_x_range(
-                                clamped_min_imp_x,
-                                clamped_max_imp_x,
-                                is_roof,
-                            ) else {
+                            let Some((range_min, range_max)) =
+                                constants::union_min_max_garg_pos_of_imp_x_range(
+                                    clamped_min_imp_x,
+                                    clamped_max_imp_x,
+                                    is_roof,
+                                )
+                            else {
                                 printer::print_error_with_input(
                                     &IMP_X_SHOULD_BE_IN_RANGE
                                         .format(&[min_valid_imp_x, max_valid_imp_x]),
@@ -949,7 +982,11 @@ impl Parser {
         }
     }
 
-    fn parse_hit_row(hit_row: &&str, valid_hit_rows: &[i32], ctx: &mut HashMapContext) -> Result<i32, ()> {
+    fn parse_hit_row(
+        hit_row: &&str,
+        valid_hit_rows: &[i32],
+        ctx: &mut HashMapContext,
+    ) -> Result<i32, ()> {
         match eval_as_i32(hit_row, ctx) {
             Err(EvalError::Eval(e)) => {
                 printer::print_error(&e);
@@ -999,7 +1036,10 @@ impl Parser {
         }
     }
 
-    fn parse_min_max_hit_col(min_max_hit_col: &&str, ctx: &mut HashMapContext) -> Result<(f32, f32), ()> {
+    fn parse_min_max_hit_col(
+        min_max_hit_col: &&str,
+        ctx: &mut HashMapContext,
+    ) -> Result<(f32, f32), ()> {
         match min_max_hit_col
             .replace('，', ",")
             .split(',')
@@ -1062,7 +1102,11 @@ impl Parser {
         }
     }
 
-    fn parse_doom_row(doom_row: &&str, valid_doom_rows: &[i32], ctx: &mut HashMapContext) -> Result<i32, ()> {
+    fn parse_doom_row(
+        doom_row: &&str,
+        valid_doom_rows: &[i32],
+        ctx: &mut HashMapContext,
+    ) -> Result<i32, ()> {
         match eval_as_i32(doom_row, ctx) {
             Err(EvalError::Eval(e)) => {
                 printer::print_error(&e);
@@ -1144,7 +1188,11 @@ impl Parser {
         }
     }
 
-    fn parse_garg_rows(garg_rows: &&str, valid_garg_rows: &[i32], ctx: &mut HashMapContext) -> Result<Vec<i32>, ()> {
+    fn parse_garg_rows(
+        garg_rows: &&str,
+        valid_garg_rows: &[i32],
+        ctx: &mut HashMapContext,
+    ) -> Result<Vec<i32>, ()> {
         match garg_rows
             .replace('，', ",")
             .split(',')
@@ -1178,7 +1226,10 @@ impl Parser {
         }
     }
 
-    fn parse_min_max_garg_x(min_max_garg_x: &&str, ctx: &mut HashMapContext) -> Result<(f32, f32), ()> {
+    fn parse_min_max_garg_x(
+        min_max_garg_x: &&str,
+        ctx: &mut HashMapContext,
+    ) -> Result<(f32, f32), ()> {
         match min_max_garg_x
             .replace('，', ",")
             .split(',')

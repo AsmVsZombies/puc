@@ -26,13 +26,20 @@ struct RawZombieData {
     on_ground: bool,
     in_pool: bool,
     in_pool_wave1to5: bool,
-    #[serde(default)] pos_col: String,
-    #[serde(default)] dmg_range_lo: i32,
-    #[serde(default)] dmg_range_hi: i32,
-    #[serde(default)] min_cs_normal: Option<i32>,
-    #[serde(default)] min_cs_flag: Option<i32>,
-    #[serde(default)] h: i32,
-    #[serde(default)] flag_offset: i32,
+    #[serde(default)]
+    pos_col: String,
+    #[serde(default)]
+    dmg_range_lo: i32,
+    #[serde(default)]
+    dmg_range_hi: i32,
+    #[serde(default)]
+    min_cs_normal: Option<i32>,
+    #[serde(default)]
+    min_cs_flag: Option<i32>,
+    #[serde(default)]
+    h: i32,
+    #[serde(default)]
+    flag_offset: i32,
 }
 
 fn decimal_to_rational(decimal: &str) -> Num {
@@ -40,25 +47,26 @@ fn decimal_to_rational(decimal: &str) -> Num {
         Some(pos) => {
             let negative = decimal.starts_with('-');
             let int_part = decimal[negative.into()..pos].parse::<i64>().unwrap();
-            let frac_part = decimal[pos+1..].parse::<i64>().unwrap();
+            let frac_part = decimal[pos + 1..].parse::<i64>().unwrap();
             let den = i64::pow(10, (decimal.len() - pos - 1) as u32);
-            let num = (if negative {-1} else {1}) * (int_part * den + frac_part);
+            let num = (if negative { -1 } else { 1 }) * (int_part * den + frac_part);
             Num::new(num, den)
-        },
-        None => decimal.parse::<Num>().unwrap()
+        }
+        None => decimal.parse::<Num>().unwrap(),
     };
 }
 
 fn parse_animation(raw: &str) -> Vec<Num> {
     let nums = raw.split(',').map(decimal_to_rational).collect::<Vec<_>>();
-    return nums.windows(2)
-               .map(|x| x[1] - x[0])
-               .collect::<Vec<_>>();
+    return nums.windows(2).map(|x| x[1] - x[0]).collect::<Vec<_>>();
 }
 
 fn parse_regular(raw: &str) -> (Vec<Num>, Vec<Num>) {
     let sep = raw.find(';').unwrap();
-    return (parse_animation(&raw[..sep]), parse_animation(&raw[sep+1..]));
+    return (
+        parse_animation(&raw[..sep]),
+        parse_animation(&raw[sep + 1..]),
+    );
 }
 
 fn convert_zombie_data(data: RawZombieData) -> ZombieData {
@@ -68,17 +76,20 @@ fn convert_zombie_data(data: RawZombieData) -> ZombieData {
         "regular" => {
             let tmp = parse_regular(&data.movement_args.unwrap());
             MovementType::Regular(tmp.0, tmp.1)
-        },
+        }
         "dancecheat" => MovementType::DanceCheat,
         "dancing" => MovementType::Dancing(parse_animation(&data.movement_args.unwrap())),
         "zomboni" => MovementType::Zomboni,
-        _ => unreachable!()
+        _ => unreachable!(),
     };
     return ZombieData {
         spawn: (data.spawn_l, data.spawn_r),
         spawn_hugewave: (data.spawn_hugewave_l, data.spawn_hugewave_r),
         movement_type: movement_type,
-        speed: (decimal_to_rational(&data.speed_l), decimal_to_rational(&data.speed_r)),
+        speed: (
+            decimal_to_rational(&data.speed_l),
+            decimal_to_rational(&data.speed_r),
+        ),
         freeze_immune: data.freeze_immune,
         chill_immune: data.chill_immune,
         def_x: (data.defx_l, data.defx_r),
@@ -100,8 +111,14 @@ fn convert_zombie_data(data: RawZombieData) -> ZombieData {
 
 pub fn get_zombie_db(file_content: &[u8]) -> HashMap<ZombieType, ZombieData> {
     let mut csv_reader = csv::Reader::from_reader(file_content);
-    return csv_reader.deserialize::<RawZombieData>()
-                     .map(Result::unwrap)
-                     .map(|x| (ZombieType::from_str(&x.name).expect(&x.name), convert_zombie_data(x)))
-                     .collect();
+    return csv_reader
+        .deserialize::<RawZombieData>()
+        .map(Result::unwrap)
+        .map(|x| {
+            (
+                ZombieType::from_str(&x.name).expect(&x.name),
+                convert_zombie_data(x),
+            )
+        })
+        .collect();
 }

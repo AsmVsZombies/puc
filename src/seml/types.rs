@@ -144,14 +144,14 @@ impl Action {
 #[derive(Default)]
 pub struct Params {
     pub repeat: Option<i32>,
-    pub zombies: Option<Vec<i32>>,    // types:
-    pub target_x: Option<i32>,        // targetPos:
-    pub require: Option<Vec<i32>>,    // require:
-    pub ban: Option<Vec<i32>>,        // ban:
-    pub huge: Option<bool>,           // huge:
-    pub activate: Option<bool>,       // activate:
-    pub dance: Option<bool>,          // dance:
-    pub natural: Option<bool>,        // natural:
-    pub cob_delay: Option<bool>,      // cobDelay: -> disableCobDelay = !cob_delay
-    pub show_std: bool,               // std:
+    pub zombies: Option<Vec<i32>>, // types:
+    pub target_x: Option<i32>,     // targetPos:
+    pub require: Option<Vec<i32>>, // require:
+    pub ban: Option<Vec<i32>>,     // ban:
+    pub huge: Option<bool>,        // huge:
+    pub activate: Option<bool>,    // activate:
+    pub dance: Option<bool>,       // dance:
+    pub natural: Option<bool>,     // natural:
+    pub cob_delay: Option<bool>,   // cobDelay: -> disableCobDelay = !cob_delay
+    pub show_std: bool,            // std:
 }

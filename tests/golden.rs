@@ -8,7 +8,12 @@ fn run(args: &[&str]) -> String {
         .args(args)
         .output()
         .expect("run puc");
-    assert!(out.status.success(), "puc {:?} failed: {}", args, String::from_utf8_lossy(&out.stderr));
+    assert!(
+        out.status.success(),
+        "puc {:?} failed: {}",
+        args,
+        String::from_utf8_lossy(&out.stderr)
+    );
     String::from_utf8(out.stdout).unwrap()
 }
 
@@ -43,7 +48,16 @@ fn extreme_fast_matches_sheet() {
 
 #[test]
 fn coord_back_matches_sheet() {
-    let o = run(&["coord", "685", "--wave", "normal", "--scene", "pe", "--zombies", "regular,gargantuar,pogo,balloon"]);
+    let o = run(&[
+        "coord",
+        "685",
+        "--wave",
+        "normal",
+        "--scene",
+        "pe",
+        "--zombies",
+        "regular,gargantuar,pogo,balloon",
+    ]);
     // regular: x 656~747, 收上/本/下 left bounds 8.5375 / 8.4375 / 8.45
     assert!(o.contains("656~747"), "{o}");
     assert!(o.contains("8.5375~10"), "{o}");
@@ -60,7 +74,16 @@ fn coord_back_matches_sheet() {
 
 #[test]
 fn coord_front_matches_sheet() {
-    let o = run(&["coord", "685", "--wave", "normal", "--scene", "de", "--zombies", "regular,gargantuar"]);
+    let o = run(&[
+        "coord",
+        "685",
+        "--wave",
+        "normal",
+        "--scene",
+        "de",
+        "--zombies",
+        "regular,gargantuar",
+    ]);
     // front: regular 收上/本/下 = 8.625 / 8.4375 / 8.4875
     assert!(o.contains("8.625~10"), "{o}");
     assert!(o.contains("8.4875~10"), "{o}");
@@ -68,7 +91,15 @@ fn coord_front_matches_sheet() {
 
 #[test]
 fn time_back_matches_sheet() {
-    let o = run(&["time", "pe", "cob", "2", "9", "--zombies", "regular,gargantuar"]);
+    let o = run(&[
+        "time",
+        "pe",
+        "cob",
+        "2",
+        "9",
+        "--zombies",
+        "regular,gargantuar",
+    ]);
     // regular lane1=486~1380 lane2=486~1449; gargantuar lane1=225~1899 lane2=225~1918
     assert!(o.contains("486~1380"), "{o}");
     assert!(o.contains("486~1449"), "{o}");
