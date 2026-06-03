@@ -231,3 +231,34 @@ pub const ERROR: &str = "出现错误";
 // game.rs
 pub const GARG_MIN_WALK_OUT_OF_RANGE: &str = "巨人最短行走时间[{}]超出数据范围({}~{})";
 pub const GARG_MAX_WALK_OUT_OF_RANGE: &str = "巨人最长行走时间[{}]超出数据范围({}~{})";
+
+// calc: ipp / extreme / coord / time
+pub const IPP_WAVE_LEN_NONNEGATIVE: &str = "加速波波长应≥0";
+pub const IPP_BACK: &str = "后院";
+pub const IPP_FRONT: &str = "前院";
+pub const IPP_C2: &str = "收二";
+pub const IPP_C3: &str = "收三";
+pub const IPP_ROOF: &str = "屋顶(列)";
+pub const IPP_ABOVE: &str = "收上";
+pub const IPP_SAME: &str = "收本";
+pub const IPP_BELOW: &str = "收下";
+
+pub const EXTREME_NEED_WALK: &str = "请提供行走时间";
+
+pub const COORD_NEED_ROOF_TAIL: &str = "屋顶场合请用 --roof-tail 指定炮尾列";
+pub const COORD_BAD_ROOF_TAIL: &str = "炮尾列应为 1~8";
+pub const COORD_DOOM_UNSUPPORTED: &str = "落点计算器暂不支持核武";
+pub const COORD_HDR_ZOMBIE: &str = "僵尸";
+pub const COORD_HDR_X: &str = "坐标范围";
+pub const COORD_HDR_FULL: &str = "全伤";
+pub const COORD_HDR_ABOVE: &str = "收上";
+pub const COORD_HDR_SAME: &str = "收本";
+pub const COORD_HDR_BELOW: &str = "收下";
+
+pub const TIME_BAD_ROW: &str = "炮所在行超出范围";
+pub const TIME_NEED_ROOF_TAIL: &str = "屋顶场合请用 --roof-tail 指定炮尾列";
+pub const TIME_HDR_ZOMBIE: &str = "僵尸";
+pub const TIME_HDR_ROW: &str = "路";
+pub const TIME_BAD_ROOF_TAIL: &str = "炮尾列应为 1~8";
+pub const TIME_BAD_COL: &str = "落点列无效";
+pub const CALC_BAD_TIME: &str = "时间应≥0";

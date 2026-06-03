@@ -1,0 +1,129 @@
+//! `puc ipp` — 热过渡 (hot / ice-free transition).
+//!
+//! Given a transition timing, the accelerated-wave length and an ice timing, compute the
+//! garg coordinate at the ice-adjusted effective time, the cob column for that "virtual"
+//! position (炸虚落点), and the landing-column windows that collect both the ice-car (冰车)
+//! and the miner (矿工) together — for back/front yard (收二/收三) and roof per cob column.
+
+use super::{fmt_col, fmt_range, Equiv};
+use crate::tables::{FAST, SLOW};
+#[cfg(feature = "en")]
+use crate::lang::en::*;
+#[cfg(feature = "zh")]
+use crate::lang::zh::*;
+
+// back/front collect offsets: (zomboni_lo_off, zomboni_hi_off, miner_lo_off, miner_hi_off)
+const BACK2: (i32, i32, i32, i32) = (107, 274, 57, 199);
+const BACK3: (i32, i32, i32, i32) = (104, 271, 50, 192);
+const FRONT2: (i32, i32, i32, i32) = (106, 273, 54, 196);
+const FRONT3: (i32, i32, i32, i32) = (99, 266, 43, 185);
+
+// roof cob horizontal damage distance per cob column (1,2,3,4,5,6,7/8), for hit above/same/below
+const ROOF_ABOVE: [i32; 7] = [115, 115, 115, 115, 115, 113, 111];
+const ROOF_SAME: [i32; 7] = [111, 114, 115, 115, 115, 115, 115];
+const ROOF_BELOW: [i32; 7] = [21, 67, 88, 102, 110, 114, 114];
+
+fn car_miner_range(
+    car_fast: f32,
+    car_slow: f32,
+    miner_fast: f32,
+    miner_slow: f32,
+    off: (i32, i32, i32, i32),
+) -> (f64, f64) {
+    let (zlo, zhi, mlo, mhi) = off;
+    let zomboni_lo = (car_slow.floor() as f64 - zlo as f64) / 80.0;
+    let zomboni_hi = (car_fast.floor() as f64 + zhi as f64) / 80.0;
+    let miner_lo = (miner_slow.floor() as f64 - mlo as f64) / 80.0;
+    let miner_hi = (miner_fast.floor() as f64 + mhi as f64) / 80.0;
+    (zomboni_lo.max(miner_lo), zomboni_hi.min(miner_hi))
+}
+
+pub fn run(transition: i32, wave_len: i32, ice: i32, equiv: Equiv) -> Result<(), String> {
+    if wave_len < 0 {
+        return Err(IPP_WAVE_LEN_NONNEGATIVE.to_string());
+    }
+    if transition < 0 {
+        return Err(CALC_BAD_TIME.to_string());
+    }
+    let equiv_v = match equiv {
+        Equiv::Cob => 0,
+        Equiv::Card => 1,
+    };
+
+    // Effective natural-speed garg time, accounting for freeze (399cs) + slow (counts half).
+    let r3 = wave_len + ice - equiv_v; // ice moment
+    let r4 = wave_len + transition; // transition moment
+    let r5 = r4 - r3; // time after ice
+    let r6 = (r5 - 399).max(0); // time after thaw
+    let r7 = r6.min(1600); // slowed portion
+    let r8 = r6 - r7; // normal-speed portion
+    let r9 = if ice - equiv_v >= 0 {
+        r3 as f64 + r7 as f64 / 2.0 + r8 as f64
+    } else {
+        r4 as f64
+    };
+    let garg_x = FAST.x_at("gargantuar", r9.trunc() as i32);
+    let virtual_cob = (garg_x.floor() as f64 - 126.0) / 80.0;
+
+    // ice-car / miner positions at the raw transition time (both move at natural speed here).
+    let car_fast = FAST.x_at("zomboni", transition);
+    let car_slow = SLOW.x_at("zomboni", transition);
+    let miner_fast = FAST.x_at("digger", transition);
+    let miner_slow = SLOW.x_at("digger", transition);
+
+    let equiv_name = match equiv {
+        Equiv::Cob => "cob",
+        Equiv::Card => "card",
+    };
+    println!(
+        "ipp transition={} wave_len={} ice={} equiv={} garg_x={} cob_col={}",
+        transition,
+        wave_len,
+        ice,
+        equiv_name,
+        fmt_col(garg_x as f64),
+        fmt_col(virtual_cob),
+    );
+
+    let (b2l, b2h) = car_miner_range(car_fast, car_slow, miner_fast, miner_slow, BACK2);
+    let (b3l, b3h) = car_miner_range(car_fast, car_slow, miner_fast, miner_slow, BACK3);
+    let (f2l, f2h) = car_miner_range(car_fast, car_slow, miner_fast, miner_slow, FRONT2);
+    let (f3l, f3h) = car_miner_range(car_fast, car_slow, miner_fast, miner_slow, FRONT3);
+    println!(
+        "  {:<6} {:<2}={:<12} {:<2}={}",
+        IPP_BACK,
+        IPP_C2,
+        fmt_range(b2l, b2h),
+        IPP_C3,
+        fmt_range(b3l, b3h)
+    );
+    println!(
+        "  {:<6} {:<2}={:<12} {:<2}={}",
+        IPP_FRONT,
+        IPP_C2,
+        fmt_range(f2l, f2h),
+        IPP_C3,
+        fmt_range(f3l, f3h)
+    );
+
+    // roof: single cob-landing column to hit zomboni at the row above/same/below, per cob col.
+    println!(
+        "  {} {:<8} {:<8} {}",
+        IPP_ROOF,
+        IPP_ABOVE,
+        IPP_SAME,
+        IPP_BELOW
+    );
+    let labels = ["1", "2", "3", "4", "5", "6", "7/8"];
+    for i in 0..7 {
+        let col = |d: i32| fmt_col((car_fast.floor() as f64 - d as f64 + 7.0) / 80.0);
+        println!(
+            "  {:<6} {:<8} {:<8} {}",
+            labels[i],
+            col(ROOF_ABOVE[i]),
+            col(ROOF_SAME[i]),
+            col(ROOF_BELOW[i])
+        );
+    }
+    Ok(())
+}

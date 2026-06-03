@@ -25,7 +25,14 @@ struct RawZombieData {
     summon_weight_hugewave: u32,
     on_ground: bool,
     in_pool: bool,
-    in_pool_wave1to5: bool
+    in_pool_wave1to5: bool,
+    #[serde(default)] pos_col: String,
+    #[serde(default)] dmg_range_lo: i32,
+    #[serde(default)] dmg_range_hi: i32,
+    #[serde(default)] min_cs_normal: Option<i32>,
+    #[serde(default)] min_cs_flag: Option<i32>,
+    #[serde(default)] h: i32,
+    #[serde(default)] flag_offset: i32,
 }
 
 fn decimal_to_rational(decimal: &str) -> Num {
@@ -81,7 +88,13 @@ fn convert_zombie_data(data: RawZombieData) -> ZombieData {
         summon_weight_normal: data.summon_weight_normal,
         summon_weight_hugewave: data.summon_weight_hugewave,
         if_generate_in: (data.on_ground, data.in_pool),
-        if_generate_in_wave1to5: (data.on_ground, data.in_pool_wave1to5)
+        if_generate_in_wave1to5: (data.on_ground, data.in_pool_wave1to5),
+        pos_col: data.pos_col,
+        dmg_range: (data.dmg_range_lo, data.dmg_range_hi),
+        min_cs_normal: data.min_cs_normal,
+        min_cs_flag: data.min_cs_flag,
+        coord_h: data.h,
+        flag_offset: data.flag_offset,
     };
 }
 

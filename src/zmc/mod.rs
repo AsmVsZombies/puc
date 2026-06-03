@@ -2,7 +2,12 @@ pub mod common;
 mod calculate_pos_distribution;
 mod parse_data;
 
-pub use common::ZombieType;
+pub use common::{ZombieData, ZombieType};
+
+/// Static metadata for a zombie type (spawn, defense box, calculator metadata).
+pub fn zombie_data(t: ZombieType) -> &'static common::ZombieData {
+    &ZOMBIE_DB[&t]
+}
 
 fn ensure_rayon_pool_initialized() {
     static INIT: std::sync::Once = std::sync::Once::new();

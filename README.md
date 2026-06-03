@@ -38,6 +38,75 @@ puc intercept "pe; wave 1 400 800; delay 8.8"
 | `imp 巨人x坐标` | 计算该巨人投掷的小鬼x坐标范围 |
 | `imp garg 小鬼x坐标(或 x1,x2)` | 计算投掷该坐标/区间小鬼的巨人x范围 |
 
+## 计算器子命令
+
+以下子命令源自「万能表」，为独立的 `clap` 子命令（非 `intercept` 的链式字符串）。
+表格类结果按行对齐输出；可用 `--zombies key1,key2` 过滤僵尸（默认全部）。
+
+### `puc coord` — 落点计算器
+
+```sh
+puc coord <时间> [--wave normal|flag] [--scene de|pe|re] [--roof-tail 1-8]
+                 [--x 最小[,最大]] [--zombies ...]
+```
+给定波次与发炮时间，对每种僵尸查其落点 x 区间，并给出在所选场合中收上/收本/收下
+各自的「全伤落点列区间」与是否可全伤。`--x` 直接指定僵尸 x 区间。
+
+```sh
+puc coord 685 --wave normal --scene pe
+# coord time=685 wave=normal scene=pe kind=cob
+#   僵尸  坐标范围  全伤  收上  收本  收下
+#   gargantuar  718~775  √  8.2125~10  8.125~10  8.125~10  ...
+```
+
+### `puc time` — 时机计算器
+
+```sh
+puc time <de|pe|re> <cob|doom> <行> <列> [--wave normal|flag] [--roof-tail 1-8] [--zombies ...]
+```
+落点计算器的逆运算：给定固定炮/核落点，对每个可伤行输出收取该行僵尸的发炮时间区间。
+
+```sh
+puc time pe cob 2 9
+# time scene=pe kind=cob row=2 col=9 ... rows=1,2,3
+#   僵尸  路1  路2  路3
+#   gargantuar  225~1899  225~1918  225~1918  ...
+```
+
+### `puc extreme` — 慢速/快速计算器
+
+```sh
+puc extreme slow <行走时间>...                       # 最慢巨人
+puc extreme fast <行走时间>... [--ladder cs] [--clown cs]   # 最快巨人
+```
+`slow`：最慢巨人坐标 + 全收两行/后院收三/前院收三落点列。多个行走时间表示同行叠加巨人。
+`fast`：最快巨人坐标 + 正好不伤落点列（可附带最快扶梯/小丑坐标）。
+
+```sh
+puc extreme slow 755
+# extreme slow walk=755 coord=760.904 two_rows=7.9375 back_three=8.025 front_three=8.1125
+```
+
+### `puc ipp` — 热过渡
+
+```sh
+puc ipp <热过渡时机> --wave-len <加速波波长> [--ice 冰时机] [--equiv cob|card]
+```
+给定热过渡时机、加速波波长与冰时机，输出巨人坐标、炸虚落点，以及同收冰车与矿工的
+后院/前院（收二/收三）与屋顶各列炮的落点列区间。`--equiv` 对应「等效换算」（炮等效/卡等效）。
+
+```sh
+puc ipp 433 --wave-len 601 --ice 0
+# ipp transition=433 wave_len=601 ice=0 equiv=cob garg_x=719.94 cob_col=7.4125 ...
+```
+
+### 僵尸 key（`--zombies`）
+
+`regular` `regular_dc_fast` `regular_dc_slow` `pole` `newspaper` `door` `football`
+`dancing` `snorkel` `zomboni` `dolphin` `jack` `balloon` `digger` `pogo` `ladder`
+`catapult` `gargantuar` `flag`，以及地形/状态变体 `duck` `duck_dc_fast` `duck_dc_slow`
+`snorkel_ashore` `digger_reverse` `duck_flag` `dolphin_swim` `balloon_ground` `pogo_walk`。
+
 ## 输出约定
 
 - 每个非静默指令输出**一行** stdout，格式为 `命令 key1=value1 key2=value2 …`。

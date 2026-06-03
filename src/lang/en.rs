@@ -260,3 +260,34 @@ pub const GARG_MIN_WALK_OUT_OF_RANGE: &str =
     "garg min walk time [{}] is out of available data range ({}~{})";
 pub const GARG_MAX_WALK_OUT_OF_RANGE: &str =
     "garg max walk time [{}] is out of available data range ({}~{})";
+
+// calc: ipp / extreme / coord / time
+pub const IPP_WAVE_LEN_NONNEGATIVE: &str = "wave length should be >= 0";
+pub const IPP_BACK: &str = "back";
+pub const IPP_FRONT: &str = "front";
+pub const IPP_C2: &str = "c2";
+pub const IPP_C3: &str = "c3";
+pub const IPP_ROOF: &str = "roof(col)";
+pub const IPP_ABOVE: &str = "above";
+pub const IPP_SAME: &str = "same";
+pub const IPP_BELOW: &str = "below";
+
+pub const EXTREME_NEED_WALK: &str = "need walk time(s)";
+
+pub const COORD_NEED_ROOF_TAIL: &str = "roof scene needs --roof-tail (cob tail column)";
+pub const COORD_BAD_ROOF_TAIL: &str = "roof tail column must be 1..=8";
+pub const COORD_DOOM_UNSUPPORTED: &str = "coord does not support doom yet";
+pub const COORD_HDR_ZOMBIE: &str = "zombie";
+pub const COORD_HDR_X: &str = "x-range";
+pub const COORD_HDR_FULL: &str = "full";
+pub const COORD_HDR_ABOVE: &str = "above";
+pub const COORD_HDR_SAME: &str = "same";
+pub const COORD_HDR_BELOW: &str = "below";
+
+pub const TIME_BAD_ROW: &str = "cob row out of range";
+pub const TIME_NEED_ROOF_TAIL: &str = "roof scene needs --roof-tail (cob tail column)";
+pub const TIME_HDR_ZOMBIE: &str = "zombie";
+pub const TIME_HDR_ROW: &str = "row";
+pub const TIME_BAD_ROOF_TAIL: &str = "roof tail column must be 1..=8";
+pub const TIME_BAD_COL: &str = "invalid landing column";
+pub const CALC_BAD_TIME: &str = "time should be >= 0";
