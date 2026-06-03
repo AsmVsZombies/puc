@@ -1,6 +1,8 @@
 use clap::{Parser as ClapParser, Subcommand};
 use puc::calc::{self, Equiv, ExplodeKind, SceneArg, Wave};
 use puc::parser::{ParseResult, Parser};
+use puc::seml::{self, SemlType};
+use std::path::PathBuf;
 use std::process::ExitCode;
 
 #[derive(ClapParser)]
@@ -58,6 +60,14 @@ enum Command {
     Extreme {
         #[command(subcommand)]
         mode: ExtremeMode,
+    },
+    /// seml: 解析 seml 文件并运行对应模拟器, 输出整洁表格
+    Seml {
+        /// 测试类型 (pos/smash/explode/refresh/pogo)
+        #[arg(value_enum)]
+        r#type: SemlType,
+        /// seml 文件路径
+        file: PathBuf,
     },
     /// 热过渡: garg coordinate + car/miner collect columns across the transition
     Ipp {
@@ -128,6 +138,7 @@ fn run_calc(command: Command) -> Result<(), String> {
         Command::Ipp { transition, wave_len, ice, equiv } => {
             calc::ipp::run(transition, wave_len, ice, equiv)
         }
+        Command::Seml { r#type, file } => seml::run(r#type, &file),
     }
 }
 

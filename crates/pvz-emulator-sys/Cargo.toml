@@ -1,0 +1,15 @@
+[package]
+name = "pvz-emulator-sys"
+version = "0.0.1"
+edition = "2021"
+license = "MIT"
+description = "FFI bindings to the PvZ emulator calculator cores"
+# Marks the native lib so cargo dedups the link and we can pass metadata downstream.
+links = "pvzemu"
+build = "build.rs"
+
+[dependencies]
+
+[build-dependencies]
+cc = "1.0"
+glob = "0.3"
