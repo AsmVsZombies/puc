@@ -35,7 +35,7 @@ pub fn run_slow(walk: &[i32]) -> Result<(), String> {
     let back_three = (c - 118.0) / 80.0; // 后院收三
     let front_three = (c - 111.0) / 80.0; // 前院收三
 
-    println!(
+    outln!(
         "extreme slow walk={} coord={} two_rows={} back_three={} front_three={}",
         walk.iter()
             .map(|t| t.to_string())
@@ -90,6 +90,6 @@ pub fn run_fast(walk: &[i32], ladder: Option<i32>, clown: Option<i32>) -> Result
             fmt_col(FAST.x_at("jack", c) as f64)
         ));
     }
-    println!("{}", line);
+    outln!("{}", line);
     Ok(())
 }

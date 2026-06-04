@@ -63,6 +63,27 @@ pub fn wave_lookup(v: &Variant, wave: Wave) -> Option<(String, f64, Option<i32>)
     }
 }
 
+/// Parse a `--x` / `x` override string ("x" or "min,max") into an inclusive (min, max) range.
+/// Shared by the CLI (`--x` flag) and the MCP server (`x` param).
+pub fn parse_x_override(s: &str) -> Result<(i32, i32), String> {
+    let parts: Vec<&str> = s.split(',').collect();
+    match parts.as_slice() {
+        [a] => {
+            let v = a.trim().parse::<i32>().map_err(|_| format!("bad x: {s}"))?;
+            Ok((v, v))
+        }
+        [a, b] => {
+            let lo = a.trim().parse::<i32>().map_err(|_| format!("bad x: {s}"))?;
+            let hi = b.trim().parse::<i32>().map_err(|_| format!("bad x: {s}"))?;
+            if lo > hi {
+                return Err(format!("bad x: min > max ({s})"));
+            }
+            Ok((lo, hi))
+        }
+        _ => Err(format!("bad x: {s}")),
+    }
+}
+
 /// MEDIAN(a,b,c) — clamps `c` into `[min(a,b), max(a,b)]`.
 pub fn median(a: f64, b: f64, c: f64) -> f64 {
     a + b + c - a.min(b).min(c) - a.max(b).max(c)

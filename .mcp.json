@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "puc": {
+      "type": "stdio",
+      "command": "./target/release/puc",
+      "args": [
+        "mcp-server"
+      ],
+      "env": {}
+    }
+  }
+}

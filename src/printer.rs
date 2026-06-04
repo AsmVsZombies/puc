@@ -2,23 +2,23 @@ use crate::game;
 use game::MAX_INTERCEPTION_DELAY;
 
 pub fn print_warning(msg: &str) {
-    eprintln!("warning: {}", msg);
+    errln!("warning: {}", msg);
 }
 
 pub fn print_error(error: &str) {
-    eprintln!("error: {}", error);
+    errln!("error: {}", error);
 }
 
 pub fn print_error_with_input(error: &str, input: &str) {
-    eprintln!("error: {} (got: {})", error, input);
+    errln!("error: {} (got: {})", error, input);
 }
 
 pub fn print_too_many_arguments_error() {
-    eprintln!("error: too many arguments");
+    errln!("error: too many arguments");
 }
 
 pub fn print_bad_format_error() {
-    eprintln!("error: bad input format");
+    errln!("error: bad input format");
 }
 
 fn floor_3(v: f32) -> f32 {
@@ -46,14 +46,14 @@ pub fn print_wave_status(times: &game::IceAndCobTimes, min_max_garg_x: (f32, f32
     if min_max_garg_x.1 as i32 > 817 {
         print_warning("cannot hit all gargs at this tick");
     }
-    println!("wave {}", format_ice_cob(times, min_max_garg_x));
+    outln!("wave {}", format_ice_cob(times, min_max_garg_x));
 }
 
 pub fn print_delay_status(times: &game::IceAndCobTimes, min_max_garg_x: (f32, f32)) {
     if min_max_garg_x.1 as i32 > 817 {
         print_warning("cannot hit all gargs at this tick");
     }
-    eprintln!("# delayed {}", format_ice_cob(times, min_max_garg_x));
+    errln!("# delayed {}", format_ice_cob(times, min_max_garg_x));
 }
 
 fn format_rows(rows: &[i32]) -> String {
@@ -125,7 +125,7 @@ pub fn print_delay_result(
         Some((lo, hi)) => format!(" garg_x=[{},{}]", lo, hi),
         None => String::new(),
     };
-    println!(
+    outln!(
         "delay {} garg_rows=[{}]{} {}",
         format_cobs(cob_and_garg_rows),
         format_rows(garg_rows),
@@ -146,7 +146,7 @@ pub fn print_doom_result(
         Some((lo, hi)) => format!(" garg_x=[{},{}]", lo, hi),
         None => String::new(),
     };
-    println!(
+    outln!(
         "doom row={} col={} garg_rows=[{}]{} {}",
         doom_row,
         doom_col,
@@ -179,7 +179,7 @@ pub fn print_max_result(
         .map(|c| c.to_string())
         .collect::<Vec<_>>()
         .join(",");
-    println!(
+    outln!(
         "max row={} col_range={}~{}{} garg_rows=[{}]{} best_cols=[{}] {}",
         hit_row,
         col_range.0,
@@ -207,7 +207,7 @@ pub fn print_max_no_harmless(
         Some(c) => format!(" cob_col={}", c),
         None => String::new(),
     };
-    println!(
+    outln!(
         "max row={} col_range={}~{}{} garg_rows=[{}]{} result=cannot_intercept_without_harm",
         hit_row,
         col_range.0,
@@ -225,7 +225,7 @@ fn fmt_x_col(x: i32) -> String {
 pub fn print_hit_cob_dist(scene: &game::Scene, max_garg_x: i32, cob_dist: &game::CobDist) {
     match scene {
         game::Scene::DE | game::Scene::PE => {
-            println!(
+            outln!(
                 "hit garg_x={} same_below={} three_rows={}",
                 max_garg_x,
                 fmt_x_col(max_garg_x - cob_dist.hit_same),
@@ -233,7 +233,7 @@ pub fn print_hit_cob_dist(scene: &game::Scene, max_garg_x: i32, cob_dist: &game:
             );
         }
         game::Scene::RE => {
-            println!(
+            outln!(
                 "hit garg_x={} above={} same={} below={}",
                 max_garg_x,
                 fmt_x_col(max_garg_x - cob_dist.hit_above),
@@ -247,7 +247,7 @@ pub fn print_hit_cob_dist(scene: &game::Scene, max_garg_x: i32, cob_dist: &game:
 pub fn print_nohit_cob_dist(scene: &game::Scene, min_garg_x: i32, cob_dist: &game::CobDist) {
     match scene {
         game::Scene::DE | game::Scene::PE => {
-            println!(
+            outln!(
                 "nohit garg_x={} same_below={} above={}",
                 min_garg_x,
                 fmt_x_col(min_garg_x - cob_dist.hit_same - 1),
@@ -255,7 +255,7 @@ pub fn print_nohit_cob_dist(scene: &game::Scene, min_garg_x: i32, cob_dist: &gam
             );
         }
         game::Scene::RE => {
-            println!(
+            outln!(
                 "nohit garg_x={} above={} same={} below={}",
                 min_garg_x,
                 fmt_x_col(min_garg_x - cob_dist.hit_above - 1),
@@ -267,14 +267,14 @@ pub fn print_nohit_cob_dist(scene: &game::Scene, min_garg_x: i32, cob_dist: &gam
 }
 
 pub fn print_imp_x_for_garg(garg_x: f32, imp_x_rnd_0: f32, imp_x_rnd_100: f32) {
-    println!(
+    outln!(
         "imp garg_x={} imp_x={:.3}~{:.3}",
         garg_x, imp_x_rnd_0, imp_x_rnd_100
     );
 }
 
 pub fn print_garg_x_for_imp(imp_x_label: &str, min_garg_x: f32, max_garg_x: f32) {
-    println!(
+    outln!(
         "imp imp_x={} garg_x={:.3}~{:.3}",
         imp_x_label,
         floor_3(min_garg_x),

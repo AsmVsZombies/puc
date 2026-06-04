@@ -1,6 +1,6 @@
 use clap::{Parser as ClapParser, Subcommand};
 use puc::calc::{self, Equiv, ExplodeKind, SceneArg, Wave};
-use puc::parser::{ParseResult, Parser};
+use puc::parser;
 use puc::seml::{self, SemlType};
 use std::path::PathBuf;
 use std::process::ExitCode;
@@ -85,6 +85,10 @@ enum Command {
         #[arg(long, value_enum, default_value_t = Equiv::Cob)]
         equiv: Equiv,
     },
+    /// Run an MCP (Model Context Protocol) stdio server exposing every
+    /// subcommand above as a tool.
+    #[cfg(feature = "mcp")]
+    McpServer,
 }
 
 #[derive(Subcommand)]
@@ -105,37 +109,11 @@ enum ExtremeMode {
     },
 }
 
-fn parse_x_override(s: &str) -> Result<(i32, i32), String> {
-    let parts: Vec<&str> = s.split(',').collect();
-    match parts.as_slice() {
-        [a] => {
-            let v = a
-                .trim()
-                .parse::<i32>()
-                .map_err(|_| format!("bad --x: {}", s))?;
-            Ok((v, v))
-        }
-        [a, b] => {
-            let lo = a
-                .trim()
-                .parse::<i32>()
-                .map_err(|_| format!("bad --x: {}", s))?;
-            let hi = b
-                .trim()
-                .parse::<i32>()
-                .map_err(|_| format!("bad --x: {}", s))?;
-            if lo > hi {
-                return Err(format!("bad --x: min > max ({})", s));
-            }
-            Ok((lo, hi))
-        }
-        _ => Err(format!("bad --x: {}", s)),
-    }
-}
-
 fn run_calc(command: Command) -> Result<(), String> {
     match command {
         Command::Intercept { .. } => unreachable!(),
+        #[cfg(feature = "mcp")]
+        Command::McpServer => unreachable!(),
         Command::Coord {
             time,
             wave,
@@ -145,7 +123,7 @@ fn run_calc(command: Command) -> Result<(), String> {
             x,
             zombies,
         } => {
-            let x_override = x.as_deref().map(parse_x_override).transpose()?;
+            let x_override = x.as_deref().map(calc::parse_x_override).transpose()?;
             calc::coord::run(
                 time,
                 wave,
@@ -187,30 +165,21 @@ fn run_calc(command: Command) -> Result<(), String> {
     }
 }
 
-fn dispatch(parser: &mut Parser, input: &str) -> ParseResult {
-    let dispatchers: [fn(&mut Parser, &str) -> ParseResult; 7] = [
-        Parser::parse_scene,
-        Parser::parse_wave,
-        Parser::parse_delay,
-        Parser::parse_doom,
-        Parser::parse_hit_or_nohit,
-        Parser::parse_find_max_delay,
-        Parser::parse_imp,
-    ];
-    for d in dispatchers {
-        match d(parser, input) {
-            ParseResult::Unmatched => continue,
-            other => return other,
-        }
-    }
-    ParseResult::Unmatched
-}
-
 fn main() -> ExitCode {
     let cli = Cli::parse();
 
     let command = match cli.command {
         Command::Intercept { command } => command,
+        #[cfg(feature = "mcp")]
+        Command::McpServer => {
+            return match puc::mcp::serve() {
+                Ok(()) => ExitCode::SUCCESS,
+                Err(msg) => {
+                    eprintln!("error: {}", msg);
+                    ExitCode::from(1)
+                }
+            };
+        }
         other => {
             return match run_calc(other) {
                 Ok(()) => ExitCode::SUCCESS,
@@ -222,20 +191,8 @@ fn main() -> ExitCode {
         }
     };
 
-    let mut parser = Parser::default();
-    for segment in command.split(';') {
-        let line = segment.trim().to_lowercase();
-        if line.is_empty() {
-            continue;
-        }
-        match dispatch(&mut parser, &line) {
-            ParseResult::Ok => continue,
-            ParseResult::Err => return ExitCode::from(1),
-            ParseResult::Unmatched => {
-                eprintln!("error: unknown command (got: {})", line);
-                return ExitCode::from(1);
-            }
-        }
+    match parser::run_intercept(&command) {
+        Ok(()) => ExitCode::SUCCESS,
+        Err(()) => ExitCode::from(1),
     }
-    ExitCode::SUCCESS
 }

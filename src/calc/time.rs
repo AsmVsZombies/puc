@@ -180,7 +180,7 @@ pub fn run(
         ExplodeKind::Cob => "cob",
         ExplodeKind::Doom => "doom",
     };
-    println!(
+    outln!(
         "time scene={} kind={} row={} col={} wave={} cx={} cy={} rows={}",
         scene_key(scene),
         kind_name,
@@ -195,11 +195,11 @@ pub fn run(
             .collect::<Vec<_>>()
             .join(",")
     );
-    print!("  {:<16}", TIME_HDR_ZOMBIE);
+    out!("  {:<16}", TIME_HDR_ZOMBIE);
     for r in &ex.hit_rows {
-        print!(" {:<13}", format!("{}{}", TIME_HDR_ROW, r));
+        out!(" {:<13}", format!("{}{}", TIME_HDR_ROW, r));
     }
-    println!();
+    outln!();
 
     for v in tables::select(zombies) {
         let Some((col_name, off, min_cs)) = wave_lookup(v, wave) else {
@@ -270,11 +270,11 @@ pub fn run(
         if !any {
             continue;
         }
-        print!("  {:<16}", v.key);
+        out!("  {:<16}", v.key);
         for c in &cells {
-            print!(" {:<13}", c);
+            out!(" {:<13}", c);
         }
-        println!();
+        outln!();
     }
     Ok(())
 }

@@ -1302,3 +1302,46 @@ impl Parser {
         }
     }
 }
+
+/// Run a semicolon-separated interception command string against a fresh
+/// [`Parser`]. Output is written through the `out!`/`errln!` sink (stdout/stderr
+/// for the CLI, or the in-memory capture buffer for the MCP server). Returns
+/// `Err(())` on the first parse error or unknown command (already reported via
+/// the diagnostic sink).
+pub fn run_intercept(command: &str) -> Result<(), ()> {
+    let mut parser = Parser::default();
+    for segment in command.split(';') {
+        let line = segment.trim().to_lowercase();
+        if line.is_empty() {
+            continue;
+        }
+        match dispatch(&mut parser, &line) {
+            ParseResult::Ok => continue,
+            ParseResult::Err => return Err(()),
+            ParseResult::Unmatched => {
+                errln!("error: unknown command (got: {})", line);
+                return Err(());
+            }
+        }
+    }
+    Ok(())
+}
+
+fn dispatch(parser: &mut Parser, input: &str) -> ParseResult {
+    let dispatchers: [fn(&mut Parser, &str) -> ParseResult; 7] = [
+        Parser::parse_scene,
+        Parser::parse_wave,
+        Parser::parse_delay,
+        Parser::parse_doom,
+        Parser::parse_hit_or_nohit,
+        Parser::parse_find_max_delay,
+        Parser::parse_imp,
+    ];
+    for d in dispatchers {
+        match d(parser, input) {
+            ParseResult::Unmatched => continue,
+            other => return other,
+        }
+    }
+    ParseResult::Unmatched
+}

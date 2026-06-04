@@ -64,7 +64,7 @@ pub fn pos(v: &Value, p: &Params, compact: bool) {
     let columns = arr(v, "columns");
     let stats = arr(v, "stats");
 
-    println!(
+    outln!(
         "seml pos mode={} repeat={}",
         if time_mode { "time" } else { "pos" },
         p.repeat
@@ -72,12 +72,12 @@ pub fn pos(v: &Value, p: &Params, compact: bool) {
             .unwrap_or_else(|| "default".into()),
     );
     if time_mode {
-        println!(
+        outln!(
             "  {:<6} {:<8} {:<14} {:<10} {:<8} {:<8}",
             "wave", "zombie", "到达率", "到达数", "时刻min", "时刻max"
         );
     } else {
-        println!(
+        outln!(
             "  {:<6} {:<8} {:<14} {:<10} {:<8} {:<8}",
             "wave", "zombie", "存活率", "存活数", "坐标min", "坐标max"
         );
@@ -96,7 +96,7 @@ pub fn pos(v: &Value, p: &Params, compact: bool) {
             let max = f(st, "maxTick")
                 .map(|x| format!("{}", x as i64))
                 .unwrap_or_else(|| "—".into());
-            println!(
+            outln!(
                 "  {:<6} {:<8} {:<14} {:<10} {:<8} {:<8}",
                 wave,
                 zname,
@@ -114,7 +114,7 @@ pub fn pos(v: &Value, p: &Params, compact: bool) {
             let max = f(st, "maxX")
                 .map(|x| format!("{:.1}", x))
                 .unwrap_or_else(|| "—".into());
-            println!(
+            outln!(
                 "  {:<6} {:<8} {:<14} {:<10} {:<8} {:<8}",
                 wave,
                 zname,
@@ -158,15 +158,15 @@ fn print_pos_cumulative(time_mode: bool, columns: &[Value], stats: &[Value], sho
         .collect();
     let mut cumulative = vec![0_i64; stats.len()];
 
-    println!("\n  累积概率");
-    print!("  {:<8}", if time_mode { "tick" } else { "x" });
+    outln!("\n  累积概率");
+    out!("  {:<8}", if time_mode { "tick" } else { "x" });
     for label in &labels {
-        print!(" {:<16}", label);
+        out!(" {:<16}", label);
     }
-    println!();
+    outln!();
 
     for key in keys {
-        print!("  {:<8}", key);
+        out!("  {:<8}", key);
         for (idx, st) in stats.iter().enumerate() {
             if let Some(count) = hist(st)
                 .and_then(|h| h.get(&key.to_string()))
@@ -196,12 +196,12 @@ fn print_pos_cumulative(time_mode: bool, columns: &[Value], stats: &[Value], sho
 
             if in_range {
                 let q = cumulative[idx] as f64 / total as f64;
-                print!(" {:<16}", fmt_prob(q, total, show_std));
+                out!(" {:<16}", fmt_prob(q, total, show_std));
             } else {
-                print!(" {:<16}", "");
+                out!(" {:<16}", "");
             }
         }
-        println!();
+        outln!();
     }
 }
 
@@ -228,7 +228,7 @@ pub fn smash(v: &Value, p: &Params, compact: bool) {
             )
         })
         .collect();
-    println!(
+    outln!(
         "seml smash protect={}",
         if prot_str.is_empty() {
             "—".into()
@@ -238,7 +238,7 @@ pub fn smash(v: &Value, p: &Params, compact: bool) {
     );
 
     // Per-wave summary.
-    println!(
+    outln!(
         "  {:<6} {:<16} {:<10} {}",
         "wave", "砸率", "砸/总", "分行 (1..6)"
     );
@@ -251,7 +251,7 @@ pub fn smash(v: &Value, p: &Params, compact: bool) {
             .iter()
             .map(|x| x.as_i64().unwrap_or(0).to_string())
             .collect();
-        println!(
+        outln!(
             "  {:<6} {:<16} {:<10} {}",
             wave,
             fmt_pct(mean, se, p.show_std),
@@ -275,13 +275,13 @@ pub fn smash(v: &Value, p: &Params, compact: bool) {
                 )
             })
             .collect();
-        println!("\n  按有效操作:");
+        outln!("\n  按有效操作:");
         for row in table {
             let ops = effective_smash_ops(&actions, arr(row, "opStates"));
             let smashed = i(row, "smashedGargCount");
             let total = i(row, "totalGargCount");
             let (mean, se) = rate_pct(smashed, total);
-            println!(
+            outln!(
                 "  [{}] {} ({}/{})",
                 ops,
                 fmt_pct(mean, se, p.show_std),
@@ -324,14 +324,14 @@ pub fn explode(v: &Value, _p: &Params, compact: bool) {
     let repeat = i(v, "repeat").max(1) as f64;
     let waves = arr(v, "waves");
 
-    println!("seml explode repeat={}", i(v, "repeat"));
+    outln!("seml explode repeat={}", i(v, "repeat"));
     for (wi, wave) in waves.iter().enumerate() {
         let start_tick = i(wave, "startTick");
         let actions: Vec<String> = arr(wave, "actions")
             .iter()
             .map(|a| a.as_str().unwrap_or("").to_string())
             .collect();
-        println!(
+        outln!(
             "\n  wave={} start_tick={} actions={}",
             wi + 1,
             start_tick,
@@ -341,7 +341,7 @@ pub fn explode(v: &Value, _p: &Params, compact: bool) {
                 actions.join(" ")
             }
         );
-        println!(
+        outln!(
             "    {:<8} {:<10} {:<10} {:<10} {:<12}",
             "tick", "炮伤↑", "炮伤=", "炮伤↓", "损伤"
         );
@@ -357,7 +357,7 @@ pub fn explode(v: &Value, _p: &Params, compact: bool) {
             let same = i(li, "fromSame") as f64 / repeat;
             let lower = i(li, "fromLower") as f64 / repeat;
             let hp = i(li, "hpLoss") as f64 / repeat;
-            println!(
+            outln!(
                 "    {:<8} {:<10.1} {:<10.1} {:<10.1} {:<12.1}",
                 tick, upper, same, lower, hp,
             );
@@ -375,11 +375,11 @@ pub fn refresh(v: &Value, p: &Params, compact: bool) {
     let scene = v.get("scene").and_then(|s| s.as_str()).unwrap_or("?");
     let cols = arr(v, "cols");
 
-    println!("seml refresh scene={}", scene);
+    outln!("seml refresh scene={}", scene);
     for (ci, col) in cols.iter().enumerate() {
         let mean = f(col, "averageAccidentRate").unwrap_or(0.0) * 100.0;
         let se = f(col, "averageAccidentRateSe").unwrap_or(0.0) * 100.0;
-        println!(
+        outln!(
             "  组 {}: 平均意外率 {}",
             ci + 1,
             fmt_pct(mean, se, p.show_std)
@@ -402,7 +402,7 @@ pub fn refresh(v: &Value, p: &Params, compact: bool) {
             } else {
                 types.join("")
             };
-            println!("    {:<12} {}", label, fmt_pct(rmean, rse, p.show_std));
+            outln!("    {:<12} {}", label, fmt_pct(rmean, rse, p.show_std));
         }
     }
 }
@@ -414,8 +414,8 @@ pub fn pogo(v: &Value, _p: &Params, compact: bool) {
     let wave_len = i(v, "waveLength");
     let ticks = arr(v, "ticks");
 
-    println!("seml pogo start_tick={} wave_length={}", start, wave_len);
-    println!(
+    outln!("seml pogo start_tick={} wave_length={}", start, wave_len);
+    outln!(
         "  {:<8} {:<14} {:<14} {:<14}",
         "tick", "炮行↑", "炮行=", "炮行↓"
     );
@@ -447,7 +447,7 @@ pub fn pogo(v: &Value, _p: &Params, compact: bool) {
         let cells: Vec<String> = (0..3)
             .map(|k| ranges.get(k).map(fmt_range).unwrap_or_else(|| "ERR".into()))
             .collect();
-        println!(
+        outln!(
             "  {:<8} {:<14} {:<14} {:<14}",
             tick, cells[0], cells[1], cells[2]
         );

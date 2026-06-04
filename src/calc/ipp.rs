@@ -75,7 +75,7 @@ pub fn run(transition: i32, wave_len: i32, ice: i32, equiv: Equiv) -> Result<(),
         Equiv::Cob => "cob",
         Equiv::Card => "card",
     };
-    println!(
+    outln!(
         "ipp transition={} wave_len={} ice={} equiv={} garg_x={} cob_col={}",
         transition,
         wave_len,
@@ -89,7 +89,7 @@ pub fn run(transition: i32, wave_len: i32, ice: i32, equiv: Equiv) -> Result<(),
     let (b3l, b3h) = car_miner_range(car_fast, car_slow, miner_fast, miner_slow, BACK3);
     let (f2l, f2h) = car_miner_range(car_fast, car_slow, miner_fast, miner_slow, FRONT2);
     let (f3l, f3h) = car_miner_range(car_fast, car_slow, miner_fast, miner_slow, FRONT3);
-    println!(
+    outln!(
         "  {:<6} {:<2}={:<12} {:<2}={}",
         IPP_BACK,
         IPP_C2,
@@ -97,7 +97,7 @@ pub fn run(transition: i32, wave_len: i32, ice: i32, equiv: Equiv) -> Result<(),
         IPP_C3,
         fmt_range(b3l, b3h)
     );
-    println!(
+    outln!(
         "  {:<6} {:<2}={:<12} {:<2}={}",
         IPP_FRONT,
         IPP_C2,
@@ -107,14 +107,14 @@ pub fn run(transition: i32, wave_len: i32, ice: i32, equiv: Equiv) -> Result<(),
     );
 
     // roof: single cob-landing column to hit zomboni at the row above/same/below, per cob col.
-    println!(
+    outln!(
         "  {} {:<8} {:<8} {}",
         IPP_ROOF, IPP_ABOVE, IPP_SAME, IPP_BELOW
     );
     let labels = ["1", "2", "3", "4", "5", "6", "7/8"];
     for i in 0..7 {
         let col = |d: i32| fmt_col((car_fast.floor() as f64 - d as f64 + 7.0) / 80.0);
-        println!(
+        outln!(
             "  {:<6} {:<8} {:<8} {}",
             labels[i],
             col(ROOF_ABOVE[i]),

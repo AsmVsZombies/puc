@@ -93,13 +93,13 @@ pub fn run(
         Wave::Normal => "normal",
         Wave::Flag => "flag",
     };
-    println!(
+    outln!(
         "coord time={} wave={} scene={} kind=cob",
         time,
         wave_name,
         scene_key(scene)
     );
-    println!(
+    outln!(
         "  {:<16} {:<13} {:<4} {:<13} {:<13} {}",
         COORD_HDR_ZOMBIE,
         COORD_HDR_X,
@@ -161,7 +161,7 @@ pub fn run(
             Some((l, r)) => fmt_range(l, r),
             None => "—".to_string(),
         };
-        println!(
+        outln!(
             "  {:<16} {:<13} {:<4} {:<13} {:<13} {}",
             v.key,
             format!("{}~{}", fmt_col(min_x), fmt_col(max_x)),
