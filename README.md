@@ -103,7 +103,7 @@ puc ipp 433 --wave-len 601 --ice 0
 ### `puc seml` — SEML 模拟器
 
 ```sh
-puc seml [--compact] <pos|smash|explode|refresh|pogo> <文件>
+puc seml [--compact] [--strict] <pos|smash|explode|refresh|pogo> <文件>
 ```
 
 解析 SEML 场景文件，调用内置 PvZ 模拟器，输出对应测试结果：
@@ -117,7 +117,8 @@ puc seml [--compact] <pos|smash|explode|refresh|pogo> <文件>
 | `pogo` | 跳跳全收范围 |
 
 `--compact` 输出简表：`smash` / `refresh` / `pos` 省略明细，`explode` / `pogo`
-只输出 50cs 倍数和首尾端点。SEML 语法见 [doc/seml.md](doc/seml.md)。
+只输出 50cs 倍数和首尾端点。`--strict` 时遇到未知行即报错；默认会跳过形如 `字段: 值`
+的未知头部行，以便在多类型测试中复用同一 seml 文件。SEML 语法见 [doc/seml.md](doc/seml.md)。
 
 ```sh
 puc seml smash tests/fixtures/smash.seml

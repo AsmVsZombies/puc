@@ -39,8 +39,9 @@ struct Line {
     line: String,
 }
 
-/// Parse a full SEML document.
-pub fn parse(text: &str) -> R<Parsed> {
+/// Parse a full SEML document. When `strict` is false, unrecognized header-style
+/// lines (whose first token contains `:`) are silently skipped instead of erroring.
+pub fn parse(text: &str, strict: bool) -> R<Parsed> {
     let raw: Vec<String> = text
         .split('\n')
         .map(|l| l.trim_end_matches('\r').to_string())
@@ -154,7 +155,9 @@ pub fn parse(text: &str) -> R<Parsed> {
             parse_smart_card(&mut config, line_num, &line, plant::SQUASH)?;
         } else if symbol == "SET" {
             parse_set(&mut variables, line_num, &line)?;
-        } else {
+        } else if strict || !symbol.contains(':') {
+            // Unknown line. In lenient mode (default), silently skip header-style
+            // lines (first token contains ':'); bare unknown symbols still error.
             return Err(e(
                 line_num,
                 "未知符号",
@@ -333,7 +336,7 @@ fn parse_scene(config: &mut Config, lines: &[Line]) -> R<()> {
             if set {
                 return Err(e(*line_num, "参数重复", "scene"));
             }
-            let scene: String = line.splitn(2, ':').nth(1).unwrap_or("").to_string();
+            let scene: String = line.splitn(2, ':').nth(1).unwrap_or("").trim().to_string();
             let upper = scene.to_uppercase();
             if is_scene(&upper) {
                 config.setting.original_scene = Some(upper.clone());
@@ -1159,7 +1162,7 @@ repeat:20000
 w 601 900
 C 445+200 1256 9
 ";
-        let parsed = parse(text).expect("parse ok");
+        let parsed = parse(text, false).expect("parse ok");
         let scenario = serde_json::to_value(&parsed.config).unwrap();
         assert_eq!(
             scenario,
@@ -1196,7 +1199,7 @@ SET x x+24
 w 1500
 P x 2 9
 ";
-        let parsed = parse(text).unwrap();
+        let parsed = parse(text, false).unwrap();
         let Action::Cob { time, .. } = &parsed.config.waves[0].actions[0] else {
             panic!("expected cob");
         };
@@ -1210,7 +1213,7 @@ scene:PE
 w1~3 601
 PP 225 25 9
 ";
-        let parsed = parse(text).unwrap();
+        let parsed = parse(text, false).unwrap();
         assert_eq!(parsed.config.waves.len(), 3);
         for w in &parsed.config.waves {
             assert_eq!(w.wave_length, 601);
@@ -1221,7 +1224,33 @@ PP 225 25 9
     #[test]
     fn unknown_zombie_suggests_closest() {
         let text = "scene:PE\ntypes:gigaa\nw 601\nPP 225 25 9\n";
-        let err = parse(text).map(|_| ()).unwrap_err();
+        let err = parse(text, false).map(|_| ()).unwrap_err();
         assert!(err.contains("未知僵尸类型"), "got: {err}");
+    }
+
+    #[test]
+    fn scene_allows_space_after_colon() {
+        let text = "scene: PE\nw 601\nPP 225 25 9\n";
+        let parsed = parse(text, false).expect("parse ok");
+        assert_eq!(parsed.config.setting.original_scene.as_deref(), Some("PE"));
+    }
+
+    #[test]
+    fn unknown_header_skipped_unless_strict() {
+        let text = "scene:PE\nfoo: bar\nw 601\nPP 225 25 9\n";
+        // Lenient (default): the unknown header line is skipped.
+        let parsed = parse(text, false).expect("lenient parse ok");
+        assert_eq!(parsed.config.waves.len(), 1);
+        // Strict: the unknown header line errors.
+        let err = parse(text, true).map(|_| ()).unwrap_err();
+        assert!(err.contains("未知符号"), "got: {err}");
+    }
+
+    #[test]
+    fn bare_unknown_symbol_errors_even_when_lenient() {
+        // No colon in the symbol => treated as a malformed action, not a header.
+        let text = "scene:PE\nZ 1 2 3\nw 601\nPP 225 25 9\n";
+        let err = parse(text, false).map(|_| ()).unwrap_err();
+        assert!(err.contains("未知符号"), "got: {err}");
     }
 }

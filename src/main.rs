@@ -71,6 +71,9 @@ enum Command {
         /// Compact output: omit verbose breakdowns; long tick tables show every 50cs plus endpoints
         #[arg(long)]
         compact: bool,
+        /// Strict mode: error on unrecognized header lines instead of skipping them
+        #[arg(long)]
+        strict: bool,
     },
     /// 热过渡: garg coordinate + car/miner collect columns across the transition
     Ipp {
@@ -161,7 +164,8 @@ fn run_calc(command: Command) -> Result<(), String> {
             r#type,
             file,
             compact,
-        } => seml::run(r#type, &file, compact),
+            strict,
+        } => seml::run(r#type, &file, compact, strict),
     }
 }
 

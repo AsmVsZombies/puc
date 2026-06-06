@@ -5,13 +5,18 @@ SEML（Survival Endless Markup Language）是为 PvZ 生存无尽定制的标记
 `puc` 支持：
 
 ```sh
-puc seml [--compact] <pos|smash|explode|refresh|pogo> <文件>
+puc seml [--compact] [--strict] <pos|smash|explode|refresh|pogo> <文件>
 ```
 
-也可通过 MCP 工具 `puc_seml` 传入 `content`（内联 SEML）或 `file`（路径），两者皆给时 `content` 优先。
+也可通过 MCP 工具 `puc_seml` 传入 `content`（内联 SEML）或 `file`（路径），两者皆给时 `content` 优先；
+`compact`、`strict` 参数与命令行同义。
 
 `--compact` 只影响显示：`smash` / `refresh` / `pos` 省略明细，`explode` / `pogo` 只显示
 50cs 倍数和首尾端点。
+
+`--strict` 控制对未知行的处理：默认（宽松）会**跳过**形如 `字段: 值`（首个 token 含 `:`）的未知头部行，
+以便在多类型测试中复用同一 seml 文件（忽略当前测试用不到的参数），也容忍拼错或新增的参数；
+加 `--strict` 时遇到未知行即报错。无冒号的未知符号（如拼错的操作）始终报错。
 
 ## 测试类型
 
@@ -26,7 +31,8 @@ puc seml [--compact] <pos|smash|explode|refresh|pogo> <文件>
 ## 基本规则
 
 - `#` 后为注释。
-- 空格和 tab 会被折叠。
+- 空格和 tab 会被折叠；`字段:值` 的冒号后可有可无空格（`scene:PE` 与 `scene: PE` 等价）。
+- 未知头部行默认被跳过，加 `--strict` 时报错（见上文）。
 - `scene:` 必填，场地可用 `DE` / `NE` / `PE` / `FE` / `RE` / `ME`，大小写均可。
 - 波次、行列使用 1 基编号。
 - 时间支持表达式和变量，例如 `445+200`、`x+266`。

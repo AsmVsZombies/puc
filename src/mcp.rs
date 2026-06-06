@@ -167,6 +167,9 @@ struct SemlParams {
     /// Compact output (omit verbose breakdowns). Default false.
     #[serde(default)]
     compact: bool,
+    /// Strict mode: error on unrecognized header lines instead of skipping them. Default false.
+    #[serde(default)]
+    strict: bool,
 }
 
 // --- tools ------------------------------------------------------------------
@@ -275,11 +278,12 @@ impl PucServer {
             Err(e) => return bad_args(e),
         };
         let compact = p.compact;
+        let strict = p.strict;
         if let Some(text) = p.content.clone() {
-            finish(crate::capture(|| seml::run_text(kind, &text, compact)))
+            finish(crate::capture(|| seml::run_text(kind, &text, compact, strict)))
         } else if let Some(path) = p.file.clone() {
             finish(crate::capture(move || {
-                seml::run(kind, std::path::Path::new(&path), compact)
+                seml::run(kind, std::path::Path::new(&path), compact, strict)
             }))
         } else {
             bad_args("provide either `content` (inline SEML) or `file` (path)".to_string())

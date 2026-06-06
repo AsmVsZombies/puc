@@ -44,16 +44,16 @@ impl SemlType {
     }
 }
 
-pub fn run(kind: SemlType, file: &Path, compact: bool) -> Result<(), String> {
+pub fn run(kind: SemlType, file: &Path, compact: bool, strict: bool) -> Result<(), String> {
     let text = std::fs::read_to_string(file)
         .map_err(|err| format!("无法读取文件 {}: {}", file.display(), err))?;
-    run_text(kind, &text, compact)
+    run_text(kind, &text, compact, strict)
 }
 
 /// Same as [`run`] but takes the SEML source directly (no file I/O). Used by the
 /// MCP server so a tool call can pass inline content instead of a path.
-pub fn run_text(kind: SemlType, text: &str, compact: bool) -> Result<(), String> {
-    let parsed = parser::parse(text)?;
+pub fn run_text(kind: SemlType, text: &str, compact: bool, strict: bool) -> Result<(), String> {
+    let parsed = parser::parse(text, strict)?;
 
     let scenario =
         serde_json::to_string(&parsed.config).map_err(|err| format!("序列化场景失败: {}", err))?;
