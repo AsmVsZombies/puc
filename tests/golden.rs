@@ -32,7 +32,7 @@ fn ipp_matches_sheet() {
 
 #[test]
 fn extreme_slow_matches_sheet() {
-    let o = run(&["extreme", "slow", "755"]);
+    let o = run(&["extreme", "--slow", "755"]);
     assert!(o.contains("coord=760.904"), "{o}");
     assert!(o.contains("two_rows=7.9375"), "{o}");
     assert!(o.contains("back_three=8.025"), "{o}");
@@ -41,9 +41,9 @@ fn extreme_slow_matches_sheet() {
 
 #[test]
 fn extreme_fast_matches_sheet() {
-    let o = run(&["extreme", "fast", "445"]);
-    assert!(o.contains("garg_coord=760.755"), "{o}");
-    assert!(o.contains("just_safe_col=7.925"), "{o}");
+    let o = run(&["extreme", "445"]);
+    assert!(o.contains("coord=760.755"), "{o}");
+    assert!(o.contains("just_safe=7.925"), "{o}");
 }
 
 #[test]

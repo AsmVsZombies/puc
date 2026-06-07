@@ -76,15 +76,18 @@ puc time pe cob 2 9
 ### `puc extreme` — 慢速/快速计算器
 
 ```sh
-puc extreme slow <行走时间>...                       # 最慢巨人
-puc extreme fast <行走时间>... [--ladder cs] [--clown cs]   # 最快巨人
+puc extreme [--fast|--slow] [--type garg|ladder|jack] <行走时间>...
 ```
-`slow`：最慢巨人坐标 + 全收两行/后院收三/前院收三落点列。多个行走时间表示同行叠加巨人。
-`fast`：最快巨人坐标 + 正好不伤落点列（可附带最快扶梯/小丑坐标）。
+默认 `--fast`、`--type garg`。多个行走时间表示同行叠加（每段从该类型出生点 `x_at(type,0)` 推进，
+坐标 = R − Σ(R − x_at(type, tᵢ))），对三种类型一致。`--slow` 取最慢实现、`--fast` 取最快实现。
+`garg` 额外输出落点列：`--slow` 给全收两行/后院收三/前院收三，`--fast` 给正好不伤；`ladder`/`jack`
+仅输出坐标。
 
 ```sh
-puc extreme slow 755
-# extreme slow walk=755 coord=760.904 two_rows=7.9375 back_three=8.025 front_three=8.1125
+puc extreme --slow 755
+# extreme slow type=garg walk=755 coord=760.904 two_rows=7.9375 back_three=8.025 front_three=8.1125
+puc extreme --type jack 200 200
+# extreme fast type=jack walk=200,200 coord=643.136
 ```
 
 ### `puc ipp` — 热过渡

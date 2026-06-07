@@ -283,6 +283,16 @@ mod tests {
     }
 
     #[test]
+    fn extreme_types_have_spawn_x() {
+        // `extreme --type ladder|jack` uses each type's spawn x (t=0) as the stacking right
+        // limit, mirroring garg's 845/854; pin the spawn x read off the workbook.
+        assert_eq!(FAST.x_at("ladder", 0), 780.0);
+        assert_eq!(SLOW.x_at("ladder", 0), 819.0);
+        assert_eq!(FAST.x_at("jack", 0), 780.0);
+        assert_eq!(SLOW.x_at("jack", 0), 819.0);
+    }
+
+    #[test]
     fn variants_built() {
         assert_eq!(VARIANTS.len(), 28);
         let garg = VARIANTS.iter().find(|v| v.key == "gargantuar").unwrap();

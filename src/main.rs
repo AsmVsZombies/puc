@@ -56,10 +56,19 @@ enum Command {
         #[arg(long)]
         zombies: Option<String>,
     },
-    /// 慢速/快速计算器: extreme garg coordinate + safe landing columns
+    /// 慢速/快速计算器: extreme coordinate (+ garg safe landing columns)
     Extreme {
-        #[command(subcommand)]
-        mode: ExtremeMode,
+        /// Most-advanced realization (default).
+        #[arg(long, conflicts_with = "slow")]
+        fast: bool,
+        /// Least-advanced realization.
+        #[arg(long)]
+        slow: bool,
+        /// Stacked zombie type: garg (default), ladder, or jack.
+        #[arg(long, value_enum, default_value_t = calc::extreme::ExtremeType::Garg)]
+        r#type: calc::extreme::ExtremeType,
+        /// Walk time(s) (cs); multiple = stacked segments
+        walk: Vec<i32>,
     },
     /// seml: 解析 seml 文件并运行对应模拟器, 输出整洁表格
     Seml {
@@ -98,24 +107,6 @@ enum Command {
     McpServer,
 }
 
-#[derive(Subcommand)]
-enum ExtremeMode {
-    /// Slowest garg(s): extreme coordinate + 全收两行/收三 columns
-    Slow {
-        /// Walk time(s) (cs); multiple = stacked gargs
-        walk: Vec<i32>,
-    },
-    /// Fastest garg: extreme coordinate + 正好不伤 column
-    Fast {
-        /// Walk time(s) (cs); multiple = stacked gargs
-        walk: Vec<i32>,
-        #[arg(long)]
-        ladder: Option<i32>,
-        #[arg(long)]
-        clown: Option<i32>,
-    },
-}
-
 fn run_calc(command: Command) -> Result<(), String> {
     match command {
         Command::Intercept { .. } => unreachable!(),
@@ -150,14 +141,19 @@ fn run_calc(command: Command) -> Result<(), String> {
             roof_tail,
             zombies,
         } => calc::time::run(scene, kind, row, col, wave, roof_tail, zombies.as_deref()),
-        Command::Extreme { mode } => match mode {
-            ExtremeMode::Slow { walk } => calc::extreme::run_slow(&walk),
-            ExtremeMode::Fast {
-                walk,
-                ladder,
-                clown,
-            } => calc::extreme::run_fast(&walk, ladder, clown),
-        },
+        Command::Extreme {
+            slow,
+            r#type,
+            walk,
+            ..
+        } => {
+            let speed = if slow {
+                calc::extreme::Speed::Slow
+            } else {
+                calc::extreme::Speed::Fast
+            };
+            calc::extreme::run(speed, r#type, &walk)
+        }
         Command::Ipp {
             transition,
             wave_len,

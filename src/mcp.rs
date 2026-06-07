@@ -123,21 +123,15 @@ struct TimeParams {
 }
 
 #[derive(Deserialize, schemars::JsonSchema)]
-struct ExtremeSlowParams {
-    /// Walk time(s) in centiseconds; multiple values = stacked gargs.
+struct ExtremeParams {
+    /// Walk time(s) in centiseconds; multiple values = stacked segments.
     walk: Vec<i32>,
-}
-
-#[derive(Deserialize, schemars::JsonSchema)]
-struct ExtremeFastParams {
-    /// Walk time(s) in centiseconds; multiple values = stacked gargs.
-    walk: Vec<i32>,
-    /// Optional ladder timing (cs).
+    /// Realization: "fast" (default, most-advanced) or "slow" (least-advanced).
     #[serde(default)]
-    ladder: Option<i32>,
-    /// Optional clown (jack) timing (cs).
+    speed: Option<String>,
+    /// Stacked zombie type: "garg" (default), "ladder", or "jack".
     #[serde(default)]
-    clown: Option<i32>,
+    r#type: Option<String>,
 }
 
 #[derive(Deserialize, schemars::JsonSchema)]
@@ -244,19 +238,27 @@ impl PucServer {
     }
 
     #[tool(
-        name = "puc_extreme_slow",
-        description = "慢速计算器: for the slowest garg(s)' walk time(s), the extreme (rightmost) coordinate and safe landing columns (全收两行 / 后院收三 / 前院收三)."
+        name = "puc_extreme",
+        description = "慢速/快速计算器: for stacked walk time(s) of a type (garg / ladder / jack; default garg), the extreme coordinate. speed=\"fast\" (default) gives the leftmost coordinate + garg 正好不伤 column; speed=\"slow\" the rightmost coordinate + garg safe landing columns (全收两行 / 后院收三 / 前院收三). ladder/jack report the coordinate only."
     )]
-    fn puc_extreme_slow(&self, Parameters(p): Parameters<ExtremeSlowParams>) -> CallToolResult {
-        finish(crate::capture(|| calc::extreme::run_slow(&p.walk)))
-    }
-
-    #[tool(
-        name = "puc_extreme_fast",
-        description = "快速计算器: for the fastest garg(s)' walk time(s) (plus optional ladder/clown), the extreme (leftmost) coordinate and the 正好不伤 column."
-    )]
-    fn puc_extreme_fast(&self, Parameters(p): Parameters<ExtremeFastParams>) -> CallToolResult {
-        finish(crate::capture(|| calc::extreme::run_fast(&p.walk, p.ladder, p.clown)))
+    fn puc_extreme(&self, Parameters(p): Parameters<ExtremeParams>) -> CallToolResult {
+        let speed = match opt_enum::<calc::extreme::Speed>(
+            p.speed.as_deref(),
+            calc::extreme::Speed::Fast,
+            "speed",
+        ) {
+            Ok(v) => v,
+            Err(e) => return bad_args(e),
+        };
+        let ty = match opt_enum::<calc::extreme::ExtremeType>(
+            p.r#type.as_deref(),
+            calc::extreme::ExtremeType::Garg,
+            "type",
+        ) {
+            Ok(v) => v,
+            Err(e) => return bad_args(e),
+        };
+        finish(crate::capture(|| calc::extreme::run(speed, ty, &p.walk)))
     }
 
     #[tool(
