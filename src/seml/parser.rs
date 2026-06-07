@@ -52,7 +52,12 @@ pub fn parse(text: &str, strict: bool) -> R<Parsed> {
     let mut params = Params::default();
     let mut variables: Vec<(String, f64)> = Vec::new();
     let mut seen: HashSet<&'static str> = HashSet::new();
-    let mut avz_time = false;
+    // Determined up front so wave parsing sees it regardless of header order; the
+    // loop below still parses `avzTime:` for value validation and duplicate checks.
+    let avz_time = lines.iter().any(|Line { line, .. }| {
+        let symbol = line.split(' ').next().unwrap_or("");
+        symbol.starts_with("avzTime:") && arg_value(line).eq_ignore_ascii_case("true")
+    });
 
     parse_scene(&mut config, &lines)?;
 
@@ -128,11 +133,10 @@ pub fn parse(text: &str, strict: bool) -> R<Parsed> {
             let v = parse_int_arg(&mut seen, "targetPos", line_num, &line)?;
             params.target_x = Some(v);
         } else if symbol.starts_with("avzTime:") {
-            if let Some(b) = parse_bool_arg(&mut seen, "avzTime", line_num, &line)? {
-                avz_time = b;
-            }
+            // Value/duplicate validation only; `avz_time` is computed up front.
+            parse_bool_arg(&mut seen, "avzTime", line_num, &line)?;
         } else if symbol.starts_with('w') {
-            parse_wave(&mut config, line_num, &line)?;
+            parse_wave(&mut config, line_num, &line, avz_time)?;
         } else if let Some(cob_num) = cob_kind(&symbol.to_uppercase()) {
             parse_cob(&mut config, line_num, &line, cob_num)?;
         } else if symbol == "C" || symbol == "C_POS" || symbol == "C_NUM" {
@@ -167,7 +171,14 @@ pub fn parse(text: &str, strict: bool) -> R<Parsed> {
     }
 
     if avz_time {
+        // AvZ time base sits 1 cs later than SEML's (perfect prejudge ice is 1 in
+        // AvZ, 0 in SEML). Shift the wave's ice times and the instant cards back by
+        // 1 to get SEML time. Fodder (C and its variants) and garlic (G) are left
+        // uncorrected.
         for wave in &mut config.waves {
+            for ice in &mut wave.ice_times {
+                *ice -= 1;
+            }
             for action in &mut wave.actions {
                 match action {
                     Action::FixedCard { symbol, time, .. }
@@ -179,17 +190,6 @@ pub fn parse(text: &str, strict: bool) -> R<Parsed> {
                         if matches!(symbol.as_str(), "A_NUM" | "J_NUM" | "a_NUM" | "W_NUM") =>
                     {
                         *time -= 1;
-                    }
-                    Action::FixedFodder {
-                        time, shovel_time, ..
-                    }
-                    | Action::SmartFodder {
-                        time, shovel_time, ..
-                    } => {
-                        *time += 1;
-                        if let Some(s) = shovel_time {
-                            *s += 1;
-                        }
                     }
                     _ => {}
                 }
@@ -563,7 +563,7 @@ fn parse_zombie_type_arg(
 
 // --- waves ------------------------------------------------------------------
 
-fn parse_wave(config: &mut Config, line_num: usize, line: &str) -> R<()> {
+fn parse_wave(config: &mut Config, line_num: usize, line: &str, avz_time: bool) -> R<()> {
     let tokens: Vec<&str> = line.split(' ').collect();
     if tokens.len() < 2 {
         return Err(e(line_num, "请提供波长", line));
@@ -592,10 +592,14 @@ fn parse_wave(config: &mut Config, line_num: usize, line: &str) -> R<()> {
         ));
     }
 
+    // Under avzTime every ice time is shifted back by 1 (perfect prejudge is 1, not
+    // 0), so 0 would underflow; require a positive value up front.
+    let min_ice = if avz_time { 1 } else { 0 };
     let mut ice_times: Vec<i32> = Vec::new();
     for t in ice_time_tokens {
         match parse_natural(t) {
-            Some(v) if v >= 0 => ice_times.push(v),
+            Some(v) if v >= min_ice => ice_times.push(v),
+            _ if avz_time => return Err(e(line_num, "avzTime 下用冰时机应为正整数", t)),
             _ => return Err(e(line_num, "用冰时机应为非负整数", t)),
         }
     }
