@@ -74,6 +74,10 @@ enum Command {
         /// Strict mode: error on unrecognized header lines instead of skipping them
         #[arg(long)]
         strict: bool,
+        /// Also write a CSV export to TARGET (a file path, or a directory to use
+        /// the default "<stem> (timestamp).csv" name). Off by default.
+        #[arg(long, value_name = "TARGET")]
+        csv: Option<PathBuf>,
     },
     /// 热过渡: garg coordinate + car/miner collect columns across the transition
     Ipp {
@@ -165,7 +169,8 @@ fn run_calc(command: Command) -> Result<(), String> {
             file,
             compact,
             strict,
-        } => seml::run(r#type, &file, compact, strict),
+            csv,
+        } => seml::run(r#type, &file, compact, strict, csv.as_deref()),
     }
 }
 

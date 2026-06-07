@@ -170,6 +170,10 @@ struct SemlParams {
     /// Strict mode: error on unrecognized header lines instead of skipping them. Default false.
     #[serde(default)]
     strict: bool,
+    /// Also write a CSV export. Value is a file path, or a directory to use the
+    /// default "<stem> (timestamp).csv" name. Omit to skip CSV (default).
+    #[serde(default)]
+    csv: Option<String>,
 }
 
 // --- tools ------------------------------------------------------------------
@@ -270,7 +274,7 @@ impl PucServer {
 
     #[tool(
         name = "puc_seml",
-        description = "seml: parse a SEML scenario, run the PvZ emulator, and print a clean table. Provide `content` (inline SEML) or `file` (path); `content` wins if both are set."
+        description = "seml: parse a SEML scenario, run the PvZ emulator, and print a clean table. Provide `content` (inline SEML) or `file` (path); `content` wins if both are set. Set `csv` to also export a CSV (a file path, or a directory to use the `<stem> (timestamp).csv` name)."
     )]
     fn puc_seml(&self, Parameters(p): Parameters<SemlParams>) -> CallToolResult {
         let kind = match req_enum::<SemlType>(&p.r#type, "type") {
@@ -279,11 +283,21 @@ impl PucServer {
         };
         let compact = p.compact;
         let strict = p.strict;
+        let csv = p.csv.clone();
         if let Some(text) = p.content.clone() {
-            finish(crate::capture(|| seml::run_text(kind, &text, compact, strict)))
+            // Inline content has no file, so a directory CSV target is named after
+            // the calculator type.
+            finish(crate::capture(move || {
+                let target = csv.as_deref().map(|c| seml::CsvTarget {
+                    path: std::path::Path::new(c),
+                    default_stem: kind.as_str(),
+                });
+                seml::run_text(kind, &text, compact, strict, target)
+            }))
         } else if let Some(path) = p.file.clone() {
             finish(crate::capture(move || {
-                seml::run(kind, std::path::Path::new(&path), compact, strict)
+                let csv_path = csv.as_deref().map(std::path::Path::new);
+                seml::run(kind, std::path::Path::new(&path), compact, strict, csv_path)
             }))
         } else {
             bad_args("provide either `content` (inline SEML) or `file` (path)".to_string())

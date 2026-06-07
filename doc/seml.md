@@ -5,11 +5,16 @@ SEML（Survival Endless Markup Language）是为 PvZ 生存无尽定制的标记
 `puc` 支持：
 
 ```sh
-puc seml [--compact] [--strict] <pos|smash|explode|refresh|pogo> <文件>
+puc seml [--compact] [--strict] [--csv <目标>] <pos|smash|explode|refresh|pogo> <文件>
 ```
 
 也可通过 MCP 工具 `puc_seml` 传入 `content`（内联 SEML）或 `file`（路径），两者皆给时 `content` 优先；
-`compact`、`strict` 参数与命令行同义。
+`compact`、`strict`、`csv` 参数与命令行同义。
+
+`--csv <目标>` 额外导出一份 CSV（默认关闭，不影响仍然打印的整洁表格），格式与万能表的 `*_test`
+工具一致（含 UTF-8 BOM）。`<目标>` 为已存在的目录时，按 `<文件名> (时间戳) .csv` 命名规则在其中
+生成；否则作为文件路径直接写入（覆盖）。MCP 内联 `content` 无文件名时，目录命名退化为测试类型
+（如 `pos (时间戳) .csv`）。
 
 `--compact` 只影响显示：`smash` / `refresh` / `pos` 省略明细，`explode` / `pogo` 只显示
 50cs 倍数和首尾端点。

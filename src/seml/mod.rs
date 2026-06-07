@@ -4,6 +4,7 @@
 //! The SEML parser is a port of the `../seml` VSCode extension; markdown block
 //! extraction is intentionally out of scope (the `<type>` comes from the CLI).
 
+pub mod csv;
 pub mod format;
 pub mod parser;
 pub mod plant;
@@ -11,12 +12,21 @@ pub mod string;
 pub mod types;
 pub mod zombie;
 
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
+use chrono::Local;
 use clap::ValueEnum;
 use serde_json::{json, Value};
 
 use types::Params;
+
+/// Where to write a CSV export. `path` is the user-supplied target: if it is an
+/// existing directory the file is named `<default_stem> (<timestamp>) .csv`
+/// inside it (the `open_csv` convention), otherwise it is written verbatim.
+pub struct CsvTarget<'a> {
+    pub path: &'a Path,
+    pub default_stem: &'a str,
+}
 
 #[derive(Clone, Copy, ValueEnum)]
 pub enum SemlType {
@@ -33,7 +43,7 @@ pub enum SemlType {
 }
 
 impl SemlType {
-    fn as_str(self) -> &'static str {
+    pub fn as_str(self) -> &'static str {
         match self {
             SemlType::Pos => "pos",
             SemlType::Smash => "smash",
@@ -44,15 +54,36 @@ impl SemlType {
     }
 }
 
-pub fn run(kind: SemlType, file: &Path, compact: bool, strict: bool) -> Result<(), String> {
+pub fn run(
+    kind: SemlType,
+    file: &Path,
+    compact: bool,
+    strict: bool,
+    csv: Option<&Path>,
+) -> Result<(), String> {
     let text = std::fs::read_to_string(file)
         .map_err(|err| format!("无法读取文件 {}: {}", file.display(), err))?;
-    run_text(kind, &text, compact, strict)
+    // A directory CSV target names the file after the input scenario's stem.
+    let stem = file
+        .file_stem()
+        .map(|s| s.to_string_lossy().into_owned())
+        .unwrap_or_else(|| kind.as_str().to_string());
+    let target = csv.map(|path| CsvTarget {
+        path,
+        default_stem: &stem,
+    });
+    run_text(kind, &text, compact, strict, target)
 }
 
 /// Same as [`run`] but takes the SEML source directly (no file I/O). Used by the
 /// MCP server so a tool call can pass inline content instead of a path.
-pub fn run_text(kind: SemlType, text: &str, compact: bool, strict: bool) -> Result<(), String> {
+pub fn run_text(
+    kind: SemlType,
+    text: &str,
+    compact: bool,
+    strict: bool,
+    csv: Option<CsvTarget>,
+) -> Result<(), String> {
     let parsed = parser::parse(text, strict)?;
 
     let scenario =
@@ -70,7 +101,37 @@ pub fn run_text(kind: SemlType, text: &str, compact: bool, strict: bool) -> Resu
         SemlType::Refresh => format::refresh(&value, &parsed.params, compact),
         SemlType::Pogo => format::pogo(&value, &parsed.params, compact),
     }
+
+    if let Some(target) = csv {
+        let body = match kind {
+            SemlType::Pos => csv::pos(&value, &parsed.params),
+            SemlType::Smash => csv::smash(&value, &parsed.config.setting.scene, &parsed.params),
+            SemlType::Explode => csv::explode(&value, &parsed.params),
+            SemlType::Refresh => csv::refresh(&value, &parsed.params),
+            SemlType::Pogo => csv::pogo(&value),
+        };
+        let out_path = write_csv(&target, &body)?;
+        outln!("CSV written to {}", out_path.display());
+    }
+
     Ok(())
+}
+
+/// Resolves the CSV output path and writes the body with a UTF-8 BOM, matching
+/// the `open_csv` convention (`"<stem> (<YYYY.MM.DD_HH.MM.SS>) .csv"`).
+fn write_csv(target: &CsvTarget, body: &str) -> Result<PathBuf, String> {
+    let path = if target.path.is_dir() {
+        let ts = Local::now().format("%Y.%m.%d_%H.%M.%S");
+        target.path.join(format!("{} ({}) .csv", target.default_stem, ts))
+    } else {
+        target.path.to_path_buf()
+    };
+    let mut bytes = Vec::with_capacity(body.len() + 3);
+    bytes.extend_from_slice(&[0xEF, 0xBB, 0xBF]); // UTF-8 BOM
+    bytes.extend_from_slice(body.as_bytes());
+    std::fs::write(&path, bytes)
+        .map_err(|err| format!("无法写入 CSV 文件 {}: {}", path.display(), err))?;
+    Ok(path)
 }
 
 /// `disableCobDelay = !cobDelay` (header default false => disable true, the shim default).
