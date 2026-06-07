@@ -8,6 +8,7 @@ pub mod csv;
 pub mod format;
 pub mod parser;
 pub mod plant;
+pub mod reuse;
 pub mod string;
 pub mod types;
 pub mod zombie;
@@ -40,6 +41,8 @@ pub enum SemlType {
     Refresh,
     /// 跳跳 (pogo collect range)
     Pogo,
+    /// 用炮复用 (cob-cannon reuse scheduler; no emulator)
+    Reuse,
 }
 
 impl SemlType {
@@ -50,6 +53,7 @@ impl SemlType {
             SemlType::Explode => "explode",
             SemlType::Refresh => "refresh",
             SemlType::Pogo => "pogo",
+            SemlType::Reuse => "reuse",
         }
     }
 }
@@ -84,6 +88,12 @@ pub fn run_text(
     strict: bool,
     csv: Option<CsvTarget>,
 ) -> Result<(), String> {
+    // The reuse scheduler is a pure timing calculation; it shares the SEML parser
+    // but not the emulator pipeline below, so dispatch it before any sim setup.
+    if let SemlType::Reuse = kind {
+        return reuse::run_text(text, compact, strict);
+    }
+
     let parsed = parser::parse(text, strict)?;
 
     let scenario =
@@ -100,6 +110,7 @@ pub fn run_text(
         SemlType::Explode => format::explode(&value, &parsed.params, compact),
         SemlType::Refresh => format::refresh(&value, &parsed.params, compact),
         SemlType::Pogo => format::pogo(&value, &parsed.params, compact),
+        SemlType::Reuse => unreachable!("reuse handled before emulator dispatch"),
     }
 
     if let Some(target) = csv {
@@ -109,6 +120,7 @@ pub fn run_text(
             SemlType::Explode => csv::explode(&value, &parsed.params),
             SemlType::Refresh => csv::refresh(&value, &parsed.params),
             SemlType::Pogo => csv::pogo(&value),
+            SemlType::Reuse => unreachable!("reuse handled before emulator dispatch"),
         };
         let out_path = write_csv(&target, &body)?;
         outln!("CSV written to {}", out_path.display());
@@ -173,6 +185,7 @@ fn build_params(kind: SemlType, p: &Params) -> Value {
             obj.insert("disableCobDelay".into(), json!(disable_cob_delay(p)));
         }
         SemlType::Pogo => {}
+        SemlType::Reuse => {}
     }
     Value::Object(obj)
 }

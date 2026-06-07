@@ -276,7 +276,7 @@ impl PucServer {
 
     #[tool(
         name = "puc_seml",
-        description = "seml: parse a SEML scenario, run the PvZ emulator, and print a clean table. Provide `content` (inline SEML) or `file` (path); `content` wins if both are set. Set `csv` to also export a CSV (a file path, or a directory to use the `<stem> (timestamp).csv` name)."
+        description = "seml: parse a SEML scenario and run the matching test. Types `pos`/`smash`/`explode`/`refresh`/`pogo` run the PvZ emulator and print a clean table; type `reuse` is a cob-cannon reuse scheduler (pure timing, no emulator) driven by the `ncobs:N` and `loop:true|false` headers (`compact` shows only failing reuses / `all ok`; ignores `csv`). Provide `content` (inline SEML) or `file` (path); `content` wins if both are set. Set `csv` to also export a CSV (a file path, or a directory to use the `<stem> (timestamp).csv` name)."
     )]
     fn puc_seml(&self, Parameters(p): Parameters<SemlParams>) -> CallToolResult {
         let kind = match req_enum::<SemlType>(&p.r#type, "type") {

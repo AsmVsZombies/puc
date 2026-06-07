@@ -154,4 +154,6 @@ pub struct Params {
     pub natural: Option<bool>,     // natural:
     pub cob_delay: Option<bool>,   // cobDelay: -> disableCobDelay = !cob_delay
     pub show_std: bool,            // std:
+    pub ncobs: Option<i32>,        // ncobs: (reuse calculator)
+    pub r#loop: Option<bool>,      // loop: (reuse calculator)
 }

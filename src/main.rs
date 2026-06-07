@@ -70,9 +70,9 @@ enum Command {
         /// Walk time(s) (cs); multiple = stacked segments
         walk: Vec<i32>,
     },
-    /// seml: 解析 seml 文件并运行对应模拟器, 输出整洁表格
+    /// seml: 解析 seml 文件并运行对应模拟器, 输出整洁表格 (reuse 为用炮复用排程)
     Seml {
-        /// 测试类型 (pos/smash/explode/refresh/pogo)
+        /// 测试类型 (pos/smash/explode/refresh/pogo/reuse)
         #[arg(value_enum)]
         r#type: SemlType,
         /// seml 文件路径

@@ -135,6 +135,13 @@ pub fn parse(text: &str, strict: bool) -> R<Parsed> {
         } else if symbol.starts_with("avzTime:") {
             // Value/duplicate validation only; `avz_time` is computed up front.
             parse_bool_arg(&mut seen, "avzTime", line_num, &line)?;
+        } else if symbol.starts_with("ncobs:") {
+            let v = parse_int_arg(&mut seen, "ncobs", line_num, &line)?;
+            params.ncobs = Some(v);
+        } else if symbol.starts_with("loop:") {
+            if let Some(b) = parse_bool_arg(&mut seen, "loop", line_num, &line)? {
+                params.r#loop = Some(b);
+            }
         } else if symbol.starts_with('w') {
             parse_wave(&mut config, line_num, &line, avz_time)?;
         } else if let Some(cob_num) = cob_kind(&symbol.to_uppercase()) {
