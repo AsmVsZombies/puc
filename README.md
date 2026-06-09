@@ -93,14 +93,15 @@ puc extreme --type jack 200 200
 ### `puc ipp` — 热过渡
 
 ```sh
-puc ipp <热过渡时机> --wave-len <加速波波长> [--ice 冰时机] [--equiv cob|card]
+puc ipp <热过渡时机> [--wave-len 加速波波长] [--ice 冰时机]
 ```
-给定热过渡时机、加速波波长与冰时机，输出巨人坐标、炸虚落点，以及同收冰车与矿工的
-后院/前院（收二/收三）与屋顶各列炮的落点列区间。`--equiv` 对应「等效换算」（炮等效/卡等效）。
+给定热过渡时机，输出同收冰车与矿工的后院/前院（收二/收三）与屋顶各列炮的落点列区间。
+另给 `--wave-len`（加速波波长）时，额外输出巨人坐标与炸虚落点，按卡等效（`1` 冰为完美预判冰，
+默认 `--ice 1`）换算；省略 `--wave-len` 则跳过炸虚落点计算。
 
 ```sh
-puc ipp 433 --wave-len 601 --ice 0
-# ipp transition=433 wave_len=601 ice=0 equiv=cob garg_x=719.94 cob_col=7.4125 ...
+puc ipp 433 --wave-len 601
+# ipp transition=433 wave_len=601 ice=1 garg_x=719.94 cob_col=7.4125 ...
 ```
 
 ### `puc seml` — SEML 模拟器

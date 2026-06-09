@@ -20,7 +20,7 @@ use rmcp::transport::stdio;
 use rmcp::{tool, tool_handler, tool_router, ErrorData, RoleServer, ServerHandler, ServiceExt};
 use serde::Deserialize;
 
-use crate::calc::{self, Equiv, ExplodeKind, SceneArg, Wave};
+use crate::calc::{self, ExplodeKind, SceneArg, Wave};
 use crate::seml::{self, SemlType};
 
 /// Server-level orientation shown to MCP clients on connect.
@@ -134,14 +134,12 @@ struct ExtremeParams {
 struct IppParams {
     /// 过渡时机，单位厘秒（>= 0）。
     transition: i32,
-    /// 加速波波长，单位厘秒（>= 0）。
-    wave_len: i32,
-    /// 用冰时机 (cs)。默认 0。
+    /// 加速波波长，单位厘秒（>= 0）。省略则跳过炸虚落点计算。
+    #[serde(default)]
+    wave_len: Option<i32>,
+    /// 用冰时机 (cs)。默认 1。
     #[serde(default)]
     ice: Option<i32>,
-    /// 等效模式："cob" 或 "card"。默认 "cob"。
-    #[serde(default)]
-    equiv: Option<String>,
 }
 
 #[derive(Deserialize, schemars::JsonSchema)]
@@ -262,12 +260,8 @@ impl PucServer {
         description = "热过渡：计算炸虚落点和同收冰车/矿工的落点范围。"
     )]
     fn puc_ipp(&self, Parameters(p): Parameters<IppParams>) -> CallToolResult {
-        let equiv = match opt_enum::<Equiv>(p.equiv.as_deref(), Equiv::Cob, "equiv") {
-            Ok(v) => v,
-            Err(e) => return bad_args(e),
-        };
-        let ice = p.ice.unwrap_or(0);
-        finish(crate::capture(|| calc::ipp::run(p.transition, p.wave_len, ice, equiv)))
+        let ice = p.ice.unwrap_or(1);
+        finish(crate::capture(|| calc::ipp::run(p.transition, p.wave_len, ice)))
     }
 
     #[tool(

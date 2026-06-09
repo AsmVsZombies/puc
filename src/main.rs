@@ -1,5 +1,5 @@
 use clap::{Parser as ClapParser, Subcommand};
-use puc::calc::{self, Equiv, ExplodeKind, SceneArg, Wave};
+use puc::calc::{self, ExplodeKind, SceneArg, Wave};
 use puc::parser;
 use puc::seml::{self, SemlType};
 use std::path::PathBuf;
@@ -108,14 +108,12 @@ enum Command {
     Ipp {
         /// 热过渡时机 (cs)
         transition: i32,
-        /// 加速波波长 (cs)
+        /// 加速波波长 (cs)。省略则跳过炸虚落点计算。
         #[arg(long)]
-        wave_len: i32,
+        wave_len: Option<i32>,
         /// 用冰时机 (cs)
-        #[arg(long, default_value_t = 0)]
+        #[arg(long, default_value_t = 1)]
         ice: i32,
-        #[arg(long, value_enum, default_value_t = Equiv::Cob)]
-        equiv: Equiv,
     },
     /// 运行 MCP（模型上下文协议）stdio 服务器，将以上每个子命令暴露为工具。
     #[cfg(feature = "mcp")]
@@ -173,8 +171,7 @@ fn run_calc(command: Command) -> Result<(), String> {
             transition,
             wave_len,
             ice,
-            equiv,
-        } => calc::ipp::run(transition, wave_len, ice, equiv),
+        } => calc::ipp::run(transition, wave_len, ice),
         Command::Seml {
             r#type,
             file,

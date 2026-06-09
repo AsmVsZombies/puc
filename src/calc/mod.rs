@@ -33,14 +33,6 @@ pub enum SceneArg {
     Re,
 }
 
-#[derive(Clone, Copy, PartialEq, ValueEnum)]
-pub enum Equiv {
-    /// 炮等效时间（0 冰 = 完美预判冰）
-    Cob,
-    /// 卡等效时间（1 冰 = 完美预判冰）
-    Card,
-}
-
 /// Effective (position column, x offset, per-wave min cs) for a variant on `wave`.
 /// Returns None if the variant does not exist on that wave.
 pub fn wave_lookup(v: &Variant, wave: Wave) -> Option<(String, f64, Option<i32>)> {

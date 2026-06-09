@@ -1,11 +1,15 @@
-//! `puc ipp` — 热过渡 (hot / ice-free transition).
+//! `puc ipp` — 热过渡 (hot transition).
 //!
-//! Given a transition timing, the accelerated-wave length and an ice timing, compute the
-//! garg coordinate at the ice-adjusted effective time, the cob column for that "virtual"
-//! position (炸虚落点), and the landing-column windows that collect both the ice-car (冰车)
-//! and the miner (矿工) together — for back/front yard (收二/收三) and roof per cob column.
+//! Given a transition timing, compute the landing-column windows that hit both the
+//! zomboni (冰车) and the digger (矿工) together — for back/front yard (收二/收三) and roof
+//! per cob column.
+//!
+//! When the accelerated-wave length (`wave_len`) is supplied, also compute the garg
+//! coordinate at the ice-adjusted effective time and the cob column for that "virtual"
+//! position (炸虚落点); this uses card equivalence (卡等效: 1 ice = perfect-prejudge ice)
+//! with the ice timing (default 1). Omitting `wave_len` skips the 炸虚落点 calculation.
 
-use super::{fmt_col, fmt_range, Equiv};
+use super::{fmt_col, fmt_range};
 use crate::tables::{FAST, SLOW};
 
 // back/front collect offsets: (zomboni_lo_off, zomboni_hi_off, miner_lo_off, miner_hi_off)
@@ -34,32 +38,37 @@ fn car_miner_range(
     (zomboni_lo.max(miner_lo), zomboni_hi.min(miner_hi))
 }
 
-pub fn run(transition: i32, wave_len: i32, ice: i32, equiv: Equiv) -> Result<(), String> {
-    if wave_len < 0 {
-        return Err(t!("ipp_wave_len_nonnegative").to_string());
-    }
+pub fn run(transition: i32, wave_len: Option<i32>, ice: i32) -> Result<(), String> {
     if transition < 0 {
         return Err(t!("calc_bad_time").to_string());
     }
-    let equiv_v = match equiv {
-        Equiv::Cob => 0,
-        Equiv::Card => 1,
-    };
 
-    // Effective natural-speed garg time, accounting for freeze (399cs) + slow (counts half).
-    let r3 = wave_len + ice - equiv_v; // ice moment
-    let r4 = wave_len + transition; // transition moment
-    let r5 = r4 - r3; // time after ice
-    let r6 = (r5 - 399).max(0); // time after thaw
-    let r7 = r6.min(1600); // slowed portion
-    let r8 = r6 - r7; // normal-speed portion
-    let r9 = if ice - equiv_v >= 0 {
-        r3 as f64 + r7 as f64 / 2.0 + r8 as f64
-    } else {
-        r4 as f64
+    // 炸虚落点 depends on the accelerated-wave length; skip it when wave_len is absent.
+    // Times use card equivalence (1 ice = perfect-prejudge ice).
+    let virtual_landing = match wave_len {
+        Some(wave_len) => {
+            if wave_len < 0 {
+                return Err(t!("ipp_wave_len_nonnegative").to_string());
+            }
+            const EQUIV_V: i32 = 1;
+            // Effective natural-speed garg time, accounting for freeze (399cs) + slow (counts half).
+            let r3 = wave_len + ice - EQUIV_V; // ice moment
+            let r4 = wave_len + transition; // transition moment
+            let r5 = r4 - r3; // time after ice
+            let r6 = (r5 - 399).max(0); // time after thaw
+            let r7 = r6.min(1600); // slowed portion
+            let r8 = r6 - r7; // normal-speed portion
+            let r9 = if ice - EQUIV_V >= 0 {
+                r3 as f64 + r7 as f64 / 2.0 + r8 as f64
+            } else {
+                r4 as f64
+            };
+            let garg_x = FAST.x_at("gargantuar", r9.trunc() as i32);
+            let virtual_cob = (garg_x.floor() as f64 - 126.0) / 80.0;
+            Some((wave_len, garg_x, virtual_cob))
+        }
+        None => None,
     };
-    let garg_x = FAST.x_at("gargantuar", r9.trunc() as i32);
-    let virtual_cob = (garg_x.floor() as f64 - 126.0) / 80.0;
 
     // ice-car / miner positions at the raw transition time (both move at natural speed here).
     let car_fast = FAST.x_at("zomboni", transition);
@@ -67,19 +76,17 @@ pub fn run(transition: i32, wave_len: i32, ice: i32, equiv: Equiv) -> Result<(),
     let miner_fast = FAST.x_at("digger", transition);
     let miner_slow = SLOW.x_at("digger", transition);
 
-    let equiv_name = match equiv {
-        Equiv::Cob => "cob",
-        Equiv::Card => "card",
-    };
-    outln!(
-        "ipp transition={} wave_len={} ice={} equiv={} garg_x={} cob_col={}",
-        transition,
-        wave_len,
-        ice,
-        equiv_name,
-        fmt_col(garg_x as f64),
-        fmt_col(virtual_cob),
-    );
+    match virtual_landing {
+        Some((wave_len, garg_x, virtual_cob)) => outln!(
+            "ipp transition={} wave_len={} ice={} garg_x={} cob_col={}",
+            transition,
+            wave_len,
+            ice,
+            fmt_col(garg_x as f64),
+            fmt_col(virtual_cob),
+        ),
+        None => outln!("ipp transition={}", transition),
+    }
 
     let (b2l, b2h) = car_miner_range(car_fast, car_slow, miner_fast, miner_slow, BACK2);
     let (b3l, b3h) = car_miner_range(car_fast, car_slow, miner_fast, miner_slow, BACK3);
