@@ -148,10 +148,10 @@ struct IppParams {
 struct SemlParams {
     /// 测试类型："pos"、"smash"、"explode"、"refresh" 或 "pogo"。
     r#type: String,
-    /// SEML 文件路径。提供此项或 `content`。
+    /// SEML 文件路径。提供此项或 `content`（不可同时给出）。
     #[serde(default)]
     file: Option<String>,
-    /// 内联 SEML 源。与 `file` 同时给出时优先。
+    /// 内联 SEML 源。提供此项或 `file`（不可同时给出）。
     #[serde(default)]
     content: Option<String>,
     /// 精简输出（省略冗长明细）。默认 false。
@@ -272,7 +272,7 @@ impl PucServer {
 
     #[tool(
         name = "puc_seml",
-        description = "seml：解析 SEML 场景并运行对应测试。类型 `pos`/`smash`/`explode`/`refresh`/`pogo` 运行 PvZ 模拟器并打印整洁表格；类型 `reuse` 为炮复用计算器（纯时机计算，不经模拟器，参数详见 puc://docs/seml）。提供 `content`（内联 SEML）或 `file`（路径）；两者都给时 `content` 优先。设置 `csv` 可同时导出 CSV（文件路径，或目录则使用 `<stem> (timestamp).csv` 名）。"
+        description = "seml：解析 SEML 场景并运行对应测试。类型 `pos`/`smash`/`explode`/`refresh`/`pogo` 运行 PvZ 模拟器并打印整洁表格；类型 `reuse` 为炮复用计算器（纯时机计算，不经模拟器，参数详见 puc://docs/seml）。提供 `content`（内联 SEML）或 `file`（路径），两者不可同时给出。设置 `csv` 可同时导出 CSV（文件路径，或目录则使用 `<stem> (timestamp).csv` 名）。"
     )]
     fn puc_seml(&self, Parameters(p): Parameters<SemlParams>) -> CallToolResult {
         let kind = match req_enum::<SemlType>(&p.r#type, "type") {
@@ -282,6 +282,11 @@ impl PucServer {
         let compact = p.compact;
         let strict = p.strict;
         let csv = p.csv.clone();
+        if p.content.is_some() && p.file.is_some() {
+            return bad_args(
+                "`content`（内联 SEML）与 `file`（路径）不能同时提供".to_string(),
+            );
+        }
         if let Some(text) = p.content.clone() {
             // Inline content has no file, so a directory CSV target is named after
             // the calculator type.

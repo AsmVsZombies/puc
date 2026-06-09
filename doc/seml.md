@@ -8,7 +8,7 @@ SEML（Survival Endless Markup Language）是为 PvZ 生存无尽定制的标记
 puc seml [--compact] [--strict] [--csv <目标>] <pos|smash|explode|refresh|pogo|reuse> <文件>
 ```
 
-也可通过 MCP 工具 `puc_seml` 传入 `content`（内联 SEML）或 `file`（路径），两者皆给时 `content` 优先；
+也可通过 MCP 工具 `puc_seml` 传入 `content`（内联 SEML）或 `file`（路径），两者不可同时给出；
 `compact`、`strict`、`csv` 参数与命令行同义。
 
 `reuse` 是用炮复用计算（纯时间计算，不跑模拟器），见文末「用炮复用」一节；MCP 经 `puc_seml`
