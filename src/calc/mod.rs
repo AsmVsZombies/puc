@@ -23,6 +23,25 @@ pub enum ExplodeKind {
     Doom,
 }
 
+impl ExplodeKind {
+    /// Explosion radius in px. Shared by `coord` and `time` so they can't drift.
+    pub fn radius(self) -> f64 {
+        match self {
+            ExplodeKind::Cob => 115.0,
+            ExplodeKind::Doom => 250.0,
+        }
+    }
+
+    /// Hit span: number of rows above/below the explosion row it can also damage
+    /// (cob 1 → 3 rows total; doom 3 → 7 rows total).
+    pub fn hit_span(self) -> i32 {
+        match self {
+            ExplodeKind::Cob => 1,
+            ExplodeKind::Doom => 3,
+        }
+    }
+}
+
 #[derive(Clone, Copy, PartialEq, ValueEnum)]
 pub enum SceneArg {
     /// 前院（5 行）

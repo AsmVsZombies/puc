@@ -179,9 +179,6 @@ coord_need_roof_tail:
 coord_bad_roof_tail:
   en: "roof tail column must be 1..=8"
   zh: "炮尾列应为 1~8"
-coord_doom_unsupported:
-  en: "coord does not support doom yet"
-  zh: "落点计算器暂不支持核武"
 coord_hdr_zombie:
   en: "zombie"
   zh: "僵尸"

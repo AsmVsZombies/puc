@@ -34,14 +34,8 @@ fn explosion(
         return Err(t!("time_bad_row", max = maxrow).to_string());
     }
     let row_height = if scene == SceneArg::De { 100.0 } else { 85.0 };
-    let radius = match kind {
-        ExplodeKind::Cob => 115.0,
-        ExplodeKind::Doom => 250.0,
-    };
-    let span = match kind {
-        ExplodeKind::Cob => 1,
-        ExplodeKind::Doom => 3,
-    };
+    let radius = kind.radius();
+    let span = kind.hit_span();
     let hit_rows: Vec<i32> = ((row - span).max(1)..=(row + span).min(maxrow)).collect();
 
     let (x, y) = match (kind, scene) {

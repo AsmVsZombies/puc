@@ -12,34 +12,63 @@ const ROOF_EXPLODE_Y: [f64; 9] = [0.0, 84.0, 104.0, 124.0, 144.0, 164.0, 184.0, 
 
 struct SceneGeom {
     explode_center: f64, // 爆炸y (back/roof) or 爆炸x-as-y (front)
-    above_y: f64,
+    same_y: f64,         // 与爆心同行的僵尸 y
     spacing: f64,
 }
 
-fn scene_geom(scene: SceneArg, roof_tail: Option<i32>) -> Result<SceneGeom, String> {
+fn scene_geom(scene: SceneArg, kind: ExplodeKind, roof_tail: Option<i32>) -> Result<SceneGeom, String> {
     Ok(match scene {
+        // Ground scenes: doom and cob share the same explosion height, so explode_center
+        // is identical for both kinds (= same_y + 70).
         SceneArg::Pe => SceneGeom {
             explode_center: 205.0,
-            above_y: 50.0,
+            same_y: 135.0,
             spacing: 85.0,
         },
         SceneArg::De => SceneGeom {
             explode_center: 220.0,
-            above_y: 50.0,
+            same_y: 150.0,
             spacing: 100.0,
         },
         SceneArg::Re => {
-            let tail = roof_tail.ok_or_else(|| t!("coord_need_roof_tail").to_string())?;
-            if !(1..=8).contains(&tail) {
-                return Err(t!("coord_bad_roof_tail").to_string());
-            }
+            // Doom's roof height is tail-independent (same_y + 80 = 205); cob's depends on
+            // where its tail lands, so only cob needs --roof-tail.
+            let explode_center = match kind {
+                ExplodeKind::Doom => 205.0,
+                ExplodeKind::Cob => {
+                    let tail = roof_tail.ok_or_else(|| t!("coord_need_roof_tail").to_string())?;
+                    if !(1..=8).contains(&tail) {
+                        return Err(t!("coord_bad_roof_tail").to_string());
+                    }
+                    ROOF_EXPLODE_Y[tail as usize]
+                }
+            };
             SceneGeom {
-                explode_center: ROOF_EXPLODE_Y[tail as usize],
-                above_y: 40.0,
+                explode_center,
+                same_y: 125.0,
                 spacing: 85.0,
             }
         }
     })
+}
+
+// Header label for a hit-row relative to the explosion row. `rel_off` < 0 is above,
+// 0 is same, > 0 is below. Cob (span 1) keeps the bare 收上/收本/收下 labels; doom
+// numbers them (收上3 … 收本 … 收下3).
+fn rel_label(rel_off: i32, span: i32) -> String {
+    if rel_off == 0 {
+        t!("coord_hdr_same").to_string()
+    } else if rel_off < 0 {
+        if span == 1 {
+            t!("coord_hdr_above").to_string()
+        } else {
+            format!("{}{}", t!("coord_hdr_above"), -rel_off)
+        }
+    } else if span == 1 {
+        t!("coord_hdr_below").to_string()
+    } else {
+        format!("{}{}", t!("coord_hdr_below"), rel_off)
+    }
 }
 
 fn clamp01_10(x: f64) -> f64 {
@@ -55,12 +84,14 @@ fn zombie_y_shift(key: &str) -> f64 {
     }
 }
 
-// per-row-relation extra equivalent-y offset (pogo's jump quirk).
-fn pogo_dy(key: &str, rel: usize) -> f64 {
+// per-row-relation extra equivalent-y offset (pogo's jump quirk). `rel_off` < 0 is
+// above, 0 same, > 0 below.
+fn pogo_dy(key: &str, rel_off: i32) -> f64 {
     if key == "pogo" {
-        match rel {
-            0 | 1 => -49.0, // above / same
-            _ => 9.0,       // below
+        if rel_off <= 0 {
+            -49.0 // above / same
+        } else {
+            9.0 // below
         }
     } else {
         0.0
@@ -79,31 +110,48 @@ pub fn run(
     if time < 0 {
         return Err(t!("calc_bad_time").to_string());
     }
-    if kind == ExplodeKind::Doom {
-        return Err(t!("coord_doom_unsupported").to_string());
-    }
-    let geom = scene_geom(scene, roof_tail)?;
-    let radius = 115.0_f64; // cob
+    let geom = scene_geom(scene, kind, roof_tail)?;
+    let radius = kind.radius();
+    let span = kind.hit_span();
+    // x→col offset, inverse of time's forward placement: cob center = col*80−7 (so +7),
+    // doom center = col*80 (so 0 → prints directly in integer-grid units 1..9).
+    let offset = match kind {
+        ExplodeKind::Cob => 7.0,
+        ExplodeKind::Doom => 0.0,
+    };
 
     let wave_name = match wave {
         Wave::Normal => "normal",
         Wave::Flag => "flag",
     };
+    let kind_name = match kind {
+        ExplodeKind::Cob => "cob",
+        ExplodeKind::Doom => "doom",
+    };
     outln!(
-        "coord time={} wave={} scene={} kind=cob",
+        "coord time={} wave={} scene={} kind={}",
         time,
         wave_name,
-        scene_key(scene)
+        scene_key(scene),
+        kind_name
     );
-    outln!(
-        "  {:<16} {:<13} {:<4} {:<13} {:<13} {}",
+    // hit-row relations: rel_off ∈ [-span, span] (above … same … below).
+    let rel_offs: Vec<i32> = (-span..=span).collect();
+    out!(
+        "  {:<16} {:<13} {:<4}",
         t!("coord_hdr_zombie"),
         t!("coord_hdr_x"),
         t!("coord_hdr_full"),
-        t!("coord_hdr_above"),
-        t!("coord_hdr_same"),
-        t!("coord_hdr_below")
     );
+    for (i, &rel_off) in rel_offs.iter().enumerate() {
+        let label = rel_label(rel_off, span);
+        if i + 1 == rel_offs.len() {
+            out!(" {}", label);
+        } else {
+            out!(" {:<13}", label);
+        }
+    }
+    outln!();
 
     for v in tables::select(zombies) {
         let Some((col, off, min_cs)) = wave_lookup(v, wave) else {
@@ -135,10 +183,10 @@ pub fn run(
         let max_coord = median(lo, hi, max_x); // B37: left-bound coordinate
 
         // landing-column range for each row-relation.
-        let mut cols: [Option<(f64, f64)>; 3] = [None; 3];
-        for (rel, cell) in cols.iter_mut().enumerate() {
-            let zombie_y = geom.above_y + rel as f64 * geom.spacing + zombie_y_shift(v.key);
-            let equiv_y = zombie_y - v.h as f64 + pogo_dy(v.key, rel);
+        let mut cols: Vec<Option<(f64, f64)>> = vec![None; rel_offs.len()];
+        for (&rel_off, cell) in rel_offs.iter().zip(cols.iter_mut()) {
+            let zombie_y = geom.same_y + rel_off as f64 * geom.spacing + zombie_y_shift(v.key);
+            let equiv_y = zombie_y - v.h as f64 + pogo_dy(v.key, rel_off);
             let def_top = equiv_y + v.def_y.0 as f64;
             let def_bot = equiv_y + v.def_y.1 as f64;
             let ydist = (def_top - geom.explode_center)
@@ -148,8 +196,8 @@ pub fn run(
                 continue; // no horizontal reach -> can't hit this row
             }
             let reach = (radius * radius - ydist * ydist).sqrt().trunc();
-            let left = clamp01_10((max_coord + v.def_x.0 as f64 - reach + 7.0) / 80.0);
-            let right = clamp01_10((min_coord + v.def_x.1 as f64 + reach + 7.0) / 80.0);
+            let left = clamp01_10((max_coord + v.def_x.0 as f64 - reach + offset) / 80.0);
+            let right = clamp01_10((min_coord + v.def_x.1 as f64 + reach + offset) / 80.0);
             *cell = Some((left, right));
         }
 
@@ -157,15 +205,21 @@ pub fn run(
             Some((l, r)) => fmt_range(l, r),
             None => "—".to_string(),
         };
-        outln!(
-            "  {:<16} {:<13} {:<4} {:<13} {:<13} {}",
+        out!(
+            "  {:<16} {:<13} {:<4}",
             v.key,
             format!("{}~{}", fmt_col(min_x), fmt_col(max_x)),
             if full { "√" } else { "" },
-            fmt_rel(cols[0]),
-            fmt_rel(cols[1]),
-            fmt_rel(cols[2]),
         );
+        for (i, c) in cols.iter().enumerate() {
+            let s = fmt_rel(*c);
+            if i + 1 == cols.len() {
+                out!(" {}", s);
+            } else {
+                out!(" {:<13}", s);
+            }
+        }
+        outln!();
     }
     Ok(())
 }

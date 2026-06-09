@@ -90,6 +90,30 @@ fn coord_front_matches_sheet() {
 }
 
 #[test]
+fn coord_back_doom_matches() {
+    // doom: hit span 3 -> 7 relative-row columns; landing cols print in integer-grid
+    // units (center = col*80, the inverse of `time`'s doom placement).
+    let o = run(&[
+        "coord",
+        "685",
+        "--scene",
+        "pe",
+        "--kind",
+        "doom",
+        "--zombies",
+        "gargantuar",
+    ]);
+    assert!(o.contains("kind=doom"), "{o}");
+    // header carries the wide doom relations
+    assert!(o.contains("收上3") && o.contains("收下3"), "{o}");
+    // gargantuar 718~775, 收本 6.35~10, 收上1 6.4~10, 收下3 6.95~10
+    assert!(o.contains("718~775"), "{o}");
+    assert!(o.contains("6.35~10"), "{o}");
+    assert!(o.contains("6.4~10"), "{o}");
+    assert!(o.contains("6.95~10"), "{o}");
+}
+
+#[test]
 fn time_back_matches_sheet() {
     let o = run(&[
         "time",

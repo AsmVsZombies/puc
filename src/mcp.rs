@@ -72,7 +72,8 @@ struct CoordParams {
     /// 波类型："normal" 或 "flag"。默认 "normal"。
     #[serde(default)]
     wave: Option<String>,
-    /// 爆炸类型："cob" 或 "doom"。默认 "cob"（此处不支持 doom）。
+    /// 爆炸类型："cob" 或 "doom"。默认 "cob"。doom 命中范围更广，输出可达 7 个相对行
+    /// （收上3…收本…收下3），落点列以整数格 1..9 显示（屋顶 doom 无需 roof_tail）。
     #[serde(default)]
     kind: Option<String>,
     /// 场地："de"（前院）、"pe"（泳池/后院）、"re"（屋顶）。默认 "pe"。

@@ -46,8 +46,8 @@ puc intercept "pe; wave 1 400 800; delay 8.8"
 ### `puc coord` — 落点计算器
 
 ```sh
-puc coord <时间> [--wave normal|flag] [--scene de|pe|re] [--roof-tail 1-8]
-                 [--x 最小[,最大]] [--zombies ...]
+puc coord <时间> [--wave normal|flag] [--scene de|pe|re] [--kind cob|doom]
+                 [--roof-tail 1-8] [--x 最小[,最大]] [--zombies ...]
 ```
 给定波次与发炮时间，对每种僵尸查其落点 x 区间，并给出在所选场合中收上/收本/收下
 各自的「全伤落点列区间」与是否可全伤。`--x` 直接指定僵尸 x 区间。
@@ -57,6 +57,17 @@ puc coord 685 --wave normal --scene pe
 # coord time=685 wave=normal scene=pe kind=cob
 #   僵尸  坐标范围  全伤  收上  收本  收下
 #   gargantuar  718~775  √  8.2125~10  8.125~10  8.125~10  ...
+```
+
+`--kind doom` 计算核武落点：命中范围更广（上下各 3 行），输出列扩展为 7 个相对行
+收上3…收本…收下3，够不到的行显示 `—`。核武落点列以整数格 1..9 显示（与 `puc time`
+一致：格 G 的爆心 x = G×80），屋顶核武高度与炮尾无关，无需 `--roof-tail`。
+
+```sh
+puc coord 685 --scene pe --kind doom
+# coord time=685 wave=normal scene=pe kind=doom
+#   僵尸  坐标范围  全伤  收上3  收上2  收上1  收本  收下1  收下2  收下3
+#   gargantuar  718~775  √  7.7625~10  6.7625~10  6.4~10  6.35~10  6.35~10  6.45~10  6.95~10
 ```
 
 ### `puc time` — 时机计算器
