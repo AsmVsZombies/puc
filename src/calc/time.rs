@@ -3,10 +3,6 @@
 //! during which the cob collects each zombie variant in that row.
 
 use super::{median, wave_lookup, ExplodeKind, SceneArg, Wave};
-#[cfg(feature = "en")]
-use crate::lang::en::*;
-#[cfg(feature = "zh")]
-use crate::lang::zh::*;
 use crate::tables::{self, FAST, SLOW};
 
 struct Explosion {
@@ -35,7 +31,7 @@ fn explosion(
 ) -> Result<Explosion, String> {
     let maxrow = max_row(scene);
     if row < 1 || row > maxrow {
-        return Err(format!("{}: 1~{}", TIME_BAD_ROW, maxrow));
+        return Err(t!("time_bad_row", max = maxrow).to_string());
     }
     let row_height = if scene == SceneArg::De { 100.0 } else { 85.0 };
     let radius = match kind {
@@ -54,9 +50,9 @@ fn explosion(
             (cob_x(col), 120.0 + (row as f64 - 1.0) * row_height)
         }
         (ExplodeKind::Cob, SceneArg::Re) => {
-            let tail = roof_tail.ok_or_else(|| TIME_NEED_ROOF_TAIL.to_string())?;
+            let tail = roof_tail.ok_or_else(|| t!("time_need_roof_tail").to_string())?;
             if !(1..=8).contains(&tail) {
-                return Err(TIME_BAD_ROOF_TAIL.to_string());
+                return Err(t!("time_bad_roof_tail").to_string());
             }
             roof_cob_xy(col, row, tail)
         }
@@ -168,7 +164,7 @@ pub fn run(
     zombies: Option<&str>,
 ) -> Result<(), String> {
     if !col.is_finite() {
-        return Err(TIME_BAD_COL.to_string());
+        return Err(t!("time_bad_col").to_string());
     }
     let ex = explosion(scene, kind, row, col, roof_tail)?;
 
@@ -195,9 +191,9 @@ pub fn run(
             .collect::<Vec<_>>()
             .join(",")
     );
-    out!("  {:<16}", TIME_HDR_ZOMBIE);
+    out!("  {:<16}", t!("time_hdr_zombie"));
     for r in &ex.hit_rows {
-        out!(" {:<13}", format!("{}{}", TIME_HDR_ROW, r));
+        out!(" {:<13}", format!("{}{}", t!("time_hdr_row"), r));
     }
     outln!();
 

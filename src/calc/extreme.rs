@@ -8,10 +8,6 @@
 //! 正好不伤 (just-not-hitting) column. ladder / jack report the coordinate only.
 
 use super::fmt_col;
-#[cfg(feature = "en")]
-use crate::lang::en::*;
-#[cfg(feature = "zh")]
-use crate::lang::zh::*;
 use crate::tables::{FAST, SLOW};
 use clap::ValueEnum;
 
@@ -51,10 +47,10 @@ impl ExtremeType {
 
 pub fn run(speed: Speed, ty: ExtremeType, walk: &[i32]) -> Result<(), String> {
     if walk.is_empty() {
-        return Err(EXTREME_NEED_WALK.to_string());
+        return Err(t!("extreme_need_walk").to_string());
     }
     if walk.iter().any(|&t| t < 0) {
-        return Err(CALC_BAD_TIME.to_string());
+        return Err(t!("calc_bad_time").to_string());
     }
     let (table, speed_name) = match speed {
         Speed::Slow => (&*SLOW, "slow"),

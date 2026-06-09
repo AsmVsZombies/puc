@@ -31,17 +31,17 @@ pub struct CsvTarget<'a> {
 
 #[derive(Clone, Copy, ValueEnum)]
 pub enum SemlType {
-    /// 坐标分布 (zombie x-coordinate / arrival-time distribution)
+    /// 坐标分布（僵尸 x 坐标 / 到达时刻分布）
     Pos,
-    /// 砸率 (gargantuar smash rate)
+    /// 砸率（巨人砸炮率）
     Smash,
-    /// 炮伤 (cob explosion damage)
+    /// 炮伤（玉米炮爆炸伤害）
     Explode,
-    /// 刷新 (spawn refresh accident rate)
+    /// 刷新（出怪刷新意外率）
     Refresh,
-    /// 跳跳 (pogo collect range)
+    /// 跳跳（跳跳收集范围）
     Pogo,
-    /// 用炮复用 (cob-cannon reuse scheduler; no emulator)
+    /// 用炮复用（炮复用计算；不经模拟器）
     Reuse,
 }
 
@@ -66,7 +66,7 @@ pub fn run(
     csv: Option<&Path>,
 ) -> Result<(), String> {
     let text = std::fs::read_to_string(file)
-        .map_err(|err| format!("无法读取文件 {}: {}", file.display(), err))?;
+        .map_err(|err| t!("seml_read_file_failed", file = file.display(), err = err).to_string())?;
     // A directory CSV target names the file after the input scenario's stem.
     let stem = file
         .file_stem()
@@ -97,12 +97,14 @@ pub fn run_text(
     let parsed = parser::parse(text, strict)?;
 
     let scenario =
-        serde_json::to_string(&parsed.config).map_err(|err| format!("序列化场景失败: {}", err))?;
+        serde_json::to_string(&parsed.config)
+            .map_err(|err| t!("seml_serialize_failed", err = err).to_string())?;
     let params_json = build_params(kind, &parsed.params).to_string();
 
     let result = pvz_emulator_sys::run(kind.as_str(), &scenario, &params_json)?;
     let value: Value =
-        serde_json::from_str(&result).map_err(|err| format!("解析模拟结果失败: {}", err))?;
+        serde_json::from_str(&result)
+            .map_err(|err| t!("seml_parse_result_failed", err = err).to_string())?;
 
     match kind {
         SemlType::Pos => format::pos(&value, &parsed.params, compact),
@@ -142,7 +144,7 @@ fn write_csv(target: &CsvTarget, body: &str) -> Result<PathBuf, String> {
     bytes.extend_from_slice(&[0xEF, 0xBB, 0xBF]); // UTF-8 BOM
     bytes.extend_from_slice(body.as_bytes());
     std::fs::write(&path, bytes)
-        .map_err(|err| format!("无法写入 CSV 文件 {}: {}", path.display(), err))?;
+        .map_err(|err| t!("seml_write_csv_failed", file = path.display(), err = err).to_string())?;
     Ok(path)
 }
 

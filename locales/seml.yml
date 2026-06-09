@@ -1,0 +1,384 @@
+_version: 2
+
+# ════════════════════════════════════════════════════════════════════════
+# SEML parser — error messages (src/seml/parser.rs)
+# ════════════════════════════════════════════════════════════════════════
+
+# line-number prefix wrapping every parser error
+seml_line_prefix:
+  en: "line %{line}: %{msg}"
+  zh: "第 %{line} 行: %{msg}"
+seml_line_prefix_src:
+  en: "line %{line}: %{msg} (at \"%{src}\")"
+  zh: "第 %{line} 行: %{msg} (位于 \"%{src}\")"
+
+# repeat/range header
+seml_wave_num_positive_int:
+  en: "wave number should be a positive integer"
+  zh: "波数应为正整数"
+seml_start_wave_gt_end:
+  en: "start wave number should be greater than end wave number"
+  zh: "起始波数应大于终止波数"
+seml_dup_param:
+  en: "duplicate parameter"
+  zh: "参数重复"
+
+# scene
+seml_unknown_scene:
+  en: "unknown scene"
+  zh: "未知场地"
+seml_supported_scenes:
+  en: "%{scene} (supported scenes: DE, NE, PE, FE, RE, ME)"
+  zh: "%{scene} (支持的场地: DE, NE, PE, FE, RE, ME)"
+
+# protect
+seml_protect_value_empty:
+  en: "protect value must not be empty"
+  zh: "protect 的值不可为空"
+seml_need_protect_row_col:
+  en: "please provide the row and column to protect"
+  zh: "请提供要保护的行与列"
+seml_protect_row_range:
+  en: "protect row should be an integer in 1~%{max}"
+  zh: "保护行应为 1~%{max} 内的整数"
+seml_col_range:
+  en: "%{who} column should be an integer in %{min}~9"
+  zh: "%{who}所在列应为 %{min}~9 内的整数"
+seml_normal_plant:
+  en: "normal-plant"
+  zh: "普通植物"
+seml_cob:
+  en: "cob"
+  zh: "炮"
+seml_protect_overlap:
+  en: "protect positions overlap"
+  zh: "保护位置重叠"
+
+# generic value validators
+seml_value_positive_int:
+  en: "the value of %{name} should be a positive integer"
+  zh: "%{name} 的值应为正整数"
+seml_value_bool:
+  en: "the value of %{name} should be true or false"
+  zh: "%{name} 的值应为 true 或 false"
+
+# zombie types
+seml_unknown_zombie:
+  en: "unknown zombie type"
+  zh: "未知僵尸类型"
+seml_supported_zombies:
+  en: "%{abbr} (supported zombie types: %{keys})"
+  zh: "%{abbr} (支持的僵尸类型: %{keys})"
+seml_did_you_mean:
+  en: "%{abbr} (did you mean %{closest}?)"
+  zh: "%{abbr} (您是否要输入 %{closest}?)"
+seml_cannot_specify_zombie:
+  en: "this zombie type cannot be specified"
+  zh: "无法指定此僵尸类型"
+seml_dup_zombie:
+  en: "duplicate zombie type"
+  zh: "僵尸类型重复"
+seml_scene_cannot_zombie:
+  en: "this zombie type cannot be specified in the %{scene} scene"
+  zh: "%{scene}场地无法指定此僵尸类型"
+
+# waves / ice timing
+seml_need_wave_length:
+  en: "please provide wave length"
+  zh: "请提供波长"
+seml_dup_wave_num:
+  en: "duplicate wave number"
+  zh: "波数重复"
+seml_need_set_wave_n:
+  en: "please set wave %{n} first"
+  zh: "请先设定第 %{n} 波"
+seml_avztime_ice_positive:
+  en: "under avzTime, ice timing should be a positive integer"
+  zh: "avzTime 下用冰时机应为正整数"
+seml_ice_nonneg:
+  en: "ice timing should be a non-negative integer"
+  zh: "用冰时机应为非负整数"
+seml_wave_len_ge_last_ice:
+  en: "wave length should be ≥ the last ice timing"
+  zh: "波长应 ≥ 最后一次用冰时机"
+seml_wave_len_positive:
+  en: "wave length should be a positive integer"
+  zh: "波长应为正整数"
+seml_start_le_wavelen:
+  en: "start time should be ≤ wave length"
+  zh: "起始时刻应 ≤ 波长"
+seml_time_nonneg:
+  en: "time should be a non-negative integer"
+  zh: "时间应为非负整数"
+seml_no_delay_base:
+  en: "no delay reference; use a non-delayed statement first"
+  zh: "没有延迟基准, 请先使用非延迟语句"
+seml_shovel_before_card:
+  en: "shovel timing must not be earlier than card timing"
+  zh: "铲除时机不可早于用卡时机"
+
+# cob action
+seml_need_cob_args:
+  en: "please provide cob fire time, landing row, landing col"
+  zh: "请提供炮生效时机, 落点行, 落点列"
+seml_remove_extra_args:
+  en: "please remove the extra arguments"
+  zh: "请删去多余的参数"
+seml_cob_tail_roof_only:
+  en: "cob tail column can only be specified for the roof scene"
+  zh: "只有屋顶场合可以指定炮尾列"
+seml_cob_tail_range:
+  en: "cob tail column should be an integer in 1~8"
+  zh: "炮尾列应为 1~8 内的整数"
+seml_roof_need_col:
+  en: "please provide the landing column for the roof scene"
+  zh: "屋顶场合请提供落点列"
+seml_landing_col_range:
+  en: "landing column should be a number in 0.0~10.0"
+  zh: "落点列应为 0.0~10.0 内的数字"
+seml_need_n_landing_rows:
+  en: "please provide %{n} landing rows"
+  zh: "请提供 %{n} 个落点行"
+seml_landing_row_range:
+  en: "landing row should be an integer in 1~%{max}"
+  zh: "落点行应为 1~%{max} 内的整数"
+
+# card action
+seml_need_card_args:
+  en: "please provide card time, card row, card col"
+  zh: "请提供用卡时机, 用卡行, 用卡列"
+seml_need_2_card_rows:
+  en: "please provide at least 2 card rows"
+  zh: "请提供至少 2 个用卡行"
+seml_card_row_range:
+  en: "card row should be an integer in 1~%{max}"
+  zh: "用卡行应为 1~%{max} 内的整数"
+seml_dup_card_row:
+  en: "duplicate card row"
+  zh: "用卡行重复"
+seml_card_col_range:
+  en: "card column should be an integer in 1~9"
+  zh: "用卡列应为 1~9 内的整数"
+
+# choose/waves sub-params
+seml_param_format:
+  en: "argument format should be [param]:[value] "
+  zh: "传参格式应为 [参数]:[值] "
+seml_param_empty:
+  en: "parameter must not be empty"
+  zh: "参数不可为空"
+seml_value_empty:
+  en: "value must not be empty"
+  zh: "值不可为空"
+seml_choose_range:
+  en: "the value of choose should be an integer in 1~%{max}"
+  zh: "choose 的值应为 1~%{max} 内的整数"
+seml_dup_waves:
+  en: "duplicate waves"
+  zh: "waves 重复"
+seml_waves_range:
+  en: "the value of waves should be an integer in 1~%{max}"
+  zh: "waves 的值应为 1~%{max} 内的整数"
+seml_unknown_param:
+  en: "unknown parameter"
+  zh: "未知参数"
+seml_supported_params:
+  en: "%{key} (supported parameters: choose, waves)"
+  zh: "%{key} (支持的参数: choose, waves)"
+seml_need_choose:
+  en: "the value of choose must be provided"
+  zh: "必须提供 choose 的值"
+
+# set / variable
+seml_need_var_expr:
+  en: "please provide a variable name and expression"
+  zh: "请提供变量名与表达式"
+seml_var_name_empty:
+  en: "variable name must not be empty"
+  zh: "变量名不可为空"
+seml_var_name_not_numeric:
+  en: "variable name must not be purely numeric"
+  zh: "变量名不可为纯数字"
+seml_expr_empty:
+  en: "expression must not be empty"
+  zh: "表达式不可为空"
+seml_expr_chars:
+  en: "expression may only contain digits, operators and parentheses"
+  zh: "表达式只能包含数字、运算符与括号"
+seml_expr_invalid:
+  en: "invalid expression"
+  zh: "表达式无效"
+seml_set_wave_first:
+  en: "please set the wave first"
+  zh: "请先设定波次"
+
+# unknown symbol / help hint
+seml_unknown_symbol:
+  en: "unknown symbol"
+  zh: "未知符号"
+seml_help_hint:
+  en: "%{symbol} (help: https://marketplace.visualstudio.com/items?itemName=Crescendo.seml)"
+  zh: "%{symbol} (使用帮助: https://marketplace.visualstudio.com/items?itemName=Crescendo.seml)"
+
+# ════════════════════════════════════════════════════════════════════════
+# SEML runner — I/O errors (src/seml/mod.rs)
+# ════════════════════════════════════════════════════════════════════════
+seml_read_file_failed:
+  en: "cannot read file %{file}: %{err}"
+  zh: "无法读取文件 %{file}: %{err}"
+seml_serialize_failed:
+  en: "failed to serialize scenario: %{err}"
+  zh: "序列化场景失败: %{err}"
+seml_parse_result_failed:
+  en: "failed to parse simulation result: %{err}"
+  zh: "解析模拟结果失败: %{err}"
+seml_write_csv_failed:
+  en: "cannot write CSV file %{file}: %{err}"
+  zh: "无法写入 CSV 文件 %{file}: %{err}"
+
+# ════════════════════════════════════════════════════════════════════════
+# SEML reuse scheduler (src/seml/reuse.rs)
+# ════════════════════════════════════════════════════════════════════════
+seml_need_ncobs:
+  en: "please provide the number of cobs (ncobs:N)"
+  zh: "请提供炮数 (ncobs:N)"
+seml_no_cob_action:
+  en: "no cob action found"
+  zh: "未找到用炮操作"
+
+# ════════════════════════════════════════════════════════════════════════
+# SEML clean-table output — column labels (src/seml/format.rs)
+# (CSV export keeps the vendor's Chinese headers — see src/seml/csv.rs)
+# ════════════════════════════════════════════════════════════════════════
+seml_arrival_rate:
+  en: "arrival%"
+  zh: "到达率"
+seml_arrival_count:
+  en: "arrived"
+  zh: "到达数"
+seml_tick_min:
+  en: "tick.min"
+  zh: "时刻min"
+seml_tick_max:
+  en: "tick.max"
+  zh: "时刻max"
+seml_alive_rate:
+  en: "alive%"
+  zh: "存活率"
+seml_alive_count:
+  en: "alive"
+  zh: "存活数"
+seml_x_min:
+  en: "x.min"
+  zh: "坐标min"
+seml_x_max:
+  en: "x.max"
+  zh: "坐标max"
+seml_cumulative_prob:
+  en: "cumulative probability"
+  zh: "累积概率"
+seml_smash_rate:
+  en: "smash%"
+  zh: "砸率"
+seml_smash_over_total:
+  en: "smash/total"
+  zh: "砸/总"
+seml_by_row:
+  en: "by row (1..6)"
+  zh: "分行 (1..6)"
+seml_by_effective_ops:
+  en: "by effective ops:"
+  zh: "按有效操作:"
+seml_dmg_upper:
+  en: "dmg↑"
+  zh: "炮伤↑"
+seml_dmg_same:
+  en: "dmg="
+  zh: "炮伤="
+seml_dmg_lower:
+  en: "dmg↓"
+  zh: "炮伤↓"
+seml_hp_loss:
+  en: "hp loss"
+  zh: "损伤"
+seml_refresh_group:
+  en: "group %{n}: avg accident rate %{rate}"
+  zh: "组 %{n}: 平均意外率 %{rate}"
+seml_none:
+  en: "none"
+  zh: "无"
+seml_row_upper:
+  en: "row↑"
+  zh: "炮行↑"
+seml_row_same:
+  en: "row="
+  zh: "炮行="
+seml_row_lower:
+  en: "row↓"
+  zh: "炮行↓"
+
+# ════════════════════════════════════════════════════════════════════════
+# Zombie display names for the clean table (src/seml/zombie.rs name_i18n).
+# zh keeps the vendor single-char glyphs; en uses the 4-char abbreviations.
+# (CSV export always uses the Chinese glyphs via zombie::name)
+# ════════════════════════════════════════════════════════════════════════
+zname_zombie:
+  en: "reg"
+  zh: "普"
+zname_conehead:
+  en: "cone"
+  zh: "障"
+zname_pole_vaulting:
+  en: "pole"
+  zh: "杆"
+zname_buckethead:
+  en: "buck"
+  zh: "桶"
+zname_newspaper:
+  en: "news"
+  zh: "报"
+zname_screendoor:
+  en: "door"
+  zh: "门"
+zname_football:
+  en: "foot"
+  zh: "橄"
+zname_dancing:
+  en: "danc"
+  zh: "舞"
+zname_snorkel:
+  en: "snor"
+  zh: "潜"
+zname_zomboni:
+  en: "zomb"
+  zh: "车"
+zname_dolphin_rider:
+  en: "dolp"
+  zh: "豚"
+zname_jack_in_the_box:
+  en: "jack"
+  zh: "丑"
+zname_balloon:
+  en: "ball"
+  zh: "气"
+zname_digger:
+  en: "digg"
+  zh: "矿"
+zname_pogo:
+  en: "pogo"
+  zh: "跳"
+zname_bungee:
+  en: "bung"
+  zh: "偷"
+zname_ladder:
+  en: "ladd"
+  zh: "梯"
+zname_catapult:
+  en: "cata"
+  zh: "篮"
+zname_gargantuar:
+  en: "garg"
+  zh: "白"
+zname_giga_gargantuar:
+  en: "giga"
+  zh: "红"

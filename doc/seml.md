@@ -11,7 +11,7 @@ puc seml [--compact] [--strict] [--csv <目标>] <pos|smash|explode|refresh|pogo
 也可通过 MCP 工具 `puc_seml` 传入 `content`（内联 SEML）或 `file`（路径），两者皆给时 `content` 优先；
 `compact`、`strict`、`csv` 参数与命令行同义。
 
-`reuse` 是用炮复用排程（纯时间计算，不跑模拟器），见文末「用炮复用」一节；MCP 经 `puc_seml`
+`reuse` 是用炮复用计算（纯时间计算，不跑模拟器），见文末「用炮复用」一节；MCP 经 `puc_seml`
 传 `type:"reuse"` 调用（`compact` 有效、`csv` 无效）。
 
 `--csv <目标>` 额外导出一份 CSV（默认关闭，不影响仍然打印的整洁表格），格式与万能表的 `*_test`
@@ -31,9 +31,9 @@ puc seml [--compact] [--strict] [--csv <目标>] <pos|smash|explode|refresh|pogo
 | 类型 | 名称 | 测什么 | 默认 `repeat` |
 | --- | --- | --- | --- |
 | `smash` | 砸率测试 | 给定用炮 / 用垫方案的砸率；每个选卡总计 1000 只红眼 | 10000 |
-| `explode` | 炮伤测试 | 炮 / 核对巨人的杀伤；每波梯 / 丑 / 橄 / 篮各 5 只 | 10000 |
+| `explode` | 炮伤测试 | 僵尸啃食和小丑爆炸对植物的期望伤害；每波梯 / 丑 / 橄 / 篮各 5 只 | 10000 |
 | `refresh` | 刷新测试 | 刷新意外率（必出 / 禁出是否满足等） | 1000 |
-| `pogo` | 跳跳测试 | 全收跳跳的最大波次；每波 1000 只跳跳 | 1000 |
+| `pogo` | 跳跳测试 | 全收跳跳的时机范围；每波 1000 只跳跳 | 1000 |
 | `pos` | 坐标分布测试 | 僵尸坐标分布，或到达指定坐标的时刻分布 | 20000 |
 
 ## 基本规则
@@ -45,7 +45,8 @@ puc seml [--compact] [--strict] [--csv <目标>] <pos|smash|explode|refresh|pogo
 - 波次、行列使用 1 基编号。
 - 时间支持表达式和变量，例如 `445+200`、`x+266`。
 - `+N` 表示相对上一条同类时间延迟 `N`cs。
-- 用冰时机、用卡时机均基于**炮等效时间**：`0` 冰为完美预判冰，`10` 冰为 Ice3。
+- 用冰时机、用卡时机默认基于**炮等效时间**：`0` 冰为完美预判冰，`10` 冰为 Ice3。
+  - 为兼容其他工具，建议无条件使用 `avzTime:true`。
 
 ## 测试参数
 
@@ -65,7 +66,7 @@ std:false
 | `protect:` | 需要保护或预生成的位置；默认炮，加 `'` 表示普通植物 |
 | `repeat:` | 模拟次数；省略时使用该测试的默认值（见上表） |
 | `avzTime:` | `true` 时使用 AvZ 时间基准（预判冰为 `1`，垫快速为 `4n-1`），默认 `false` |
-| `std:` | `true` 时输出标准误差（形如 `a ± b`），默认 `false` |
+| `std:` | `true` 时输出标准差（形如 `a±b`），默认 `false` |
 | `cobDelay:` | `true` 时考虑炮引信延迟，默认 `false` |
 
 各测试额外参数：
@@ -78,8 +79,29 @@ std:false
 | `pogo` | `protect:` 只取列数（无需提供多行）；屋顶需用一条用炮操作给出考虑的炮尾列 |
 | `refresh` | `require:` 必出类型；`ban:` 禁出类型；`huge:` 旗帜波；`activate:` 激活 / 分离；`dance:` dance cheat；`natural:` 自然 / 均匀出怪 |
 
-僵尸类型可用中文单字或英文四字缩写，例如 `红白`、`giga garg`、`foot zomb`。命名参考
-[僵尸命名一览](https://forum.crescb.com/postid/5885/)。
+僵尸类型可用中文单字或英文四字缩写，例如 `红白`、`giga garg`、`foot zomb`。命名一览：
+
+| 英文全名 | 中文简写 | 英文简写 |
+| --- | --- | --- |
+| Conehead Zombie | 障 | cone |
+| Pole Vaulting Zombie | 杆 | pole |
+| Buckethead Zombie | 桶 | buck |
+| Newspaper Zombie | 报 | news |
+| Screen Door Zombie | 门 | scre |
+| Football Zombie | 橄 | foot |
+| Dancing Zombie | 舞 | danc |
+| Snorkel Zombie | 潜 | snor |
+| Zomboni | 车 | zomb |
+| Dolphin Rider Zombie | 豚 | dolp |
+| Jack-in-the-Box Zombie | 丑 | jack |
+| Balloon Zombie | 气 | ball |
+| Digger Zombie | 矿 | digg |
+| Pogo Zombie | 跳 | pogo |
+| Bungee Zombie | 偷 | bung |
+| Ladder Zombie | 梯 | ladd |
+| Catapult Zombie | 篮 | cata |
+| Gargantuar | 白 | garg |
+| Giga-gargantuar | 红 | giga |
 
 ## 波长
 
@@ -233,7 +255,7 @@ PP 225 25 9
 
 ## 用炮复用 (reuse)
 
-`reuse` 测试把一套固定的用炮方案，在有限的 `ncobs` 门炮间做复用排程，输出每发炮复用的是
+`reuse` 测试把一套固定的用炮方案，在有限的 `ncobs` 门炮间做复用计算，输出每发炮复用的是
 哪一发的炮、以及两次发射之间的实际回复时间（炮回复需 **3475cs**）。这是纯时间计算，不跑模拟器，
 因此忽略场地、僵尸、`repeat` 等参数，只读波长与用炮操作。
 
@@ -256,7 +278,7 @@ PP 225 25 9
 每发可被复用的炮，并在末尾输出 `next:` 行——模拟结束（最后一波末）时各门炮的剩余回复时间，
 升序排列、空格分隔，**不做下限截断**（已回复完毕的炮显示负数）；从未发射的炮显示 `-inf`。
 
-`--compact` 只保留来不及回复（带 ` (!)`）的行，省略成功复用行；若无任何失败行，输出 `all ok`。
+`--compact` 只保留来不及回复（带 `(!)`）的行，省略成功复用行；若无任何失败行，输出 `all ok`。
 `next:` 行（不循环时）始终保留。
 
 示例（循环）：

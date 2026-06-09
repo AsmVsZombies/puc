@@ -1,14 +1,7 @@
 use crate::constants;
 use crate::game;
 use crate::printer;
-use dyn_fmt::AsStrFormatExt;
 use evalexpr::{eval_with_context_mut, HashMapContext, Value};
-
-#[cfg(feature = "en")]
-use crate::lang::en::*;
-
-#[cfg(feature = "zh")]
-use crate::lang::zh::*;
 
 const DEFAULT_SCENE: game::Scene = game::Scene::PE;
 const DEFAULT_COB_TIME: i32 = 318;
@@ -47,11 +40,11 @@ fn eval_as_f32(expr: &str, ctx: &mut HashMapContext) -> Result<f32, EvalError> {
 fn validate_garg_x_range(min_max_garg_x: &mut (f32, f32)) -> Result<game::GargXRange, ()> {
     match game::GargXRange::of_min_max_garg_pos(*min_max_garg_x) {
         game::GargXRange::Cancelled => {
-            printer::print_warning(GARG_X_RANGE_CANCELLED);
+            printer::print_warning(&t!("garg_x_range_cancelled"));
             Err(())
         }
         game::GargXRange::Modified { min, max } => {
-            printer::print_warning(GARG_X_RANGE_MODIFIED.format(&[min, max]).as_str());
+            printer::print_warning(&t!("garg_x_range_modified", min = min, max = max));
             *min_max_garg_x = (min, max);
             Ok(game::GargXRange::Modified { min, max })
         }
@@ -170,11 +163,11 @@ impl Parser {
                     if !self.scene.is_roof() {
                         match extra_args {
                             [">", ..] if *command == "delay" => {
-                                printer::print_error(NEED_HIT_ROW_HIT_COL);
+                                printer::print_error(&t!("need_hit_row_hit_col"));
                                 return ParseResult::Err;
                             }
                             [_, ">", ..] if *command == "delay" => {
-                                printer::print_error(NEED_HIT_COL);
+                                printer::print_error(&t!("need_hit_col"));
                                 return ParseResult::Err;
                             }
                             [hit_row, hit_col, ">", garg_pos_args @ ..] if *command == "delay" => {
@@ -212,7 +205,7 @@ impl Parser {
                                 )
                             }
                             [] => {
-                                printer::print_error(NEED_HIT_COL);
+                                printer::print_error(&t!("need_hit_col"));
                                 return ParseResult::Err;
                             }
                             [hit_col] => {
@@ -250,15 +243,15 @@ impl Parser {
                     } else {
                         match extra_args {
                             [">", ..] if *command == "delay" => {
-                                printer::print_error(NEED_HIT_ROW_HIT_COL_COB_COL);
+                                printer::print_error(&t!("need_hit_row_hit_col_cob_col"));
                                 return ParseResult::Err;
                             }
                             [_, ">", ..] if *command == "delay" => {
-                                printer::print_error(NEED_HIT_COL_COB_COL);
+                                printer::print_error(&t!("need_hit_col_cob_col"));
                                 return ParseResult::Err;
                             }
                             [_, _, ">", ..] if *command == "delay" => {
-                                printer::print_error(NEED_COB_COL);
+                                printer::print_error(&t!("need_cob_col"));
                                 return ParseResult::Err;
                             }
                             [hit_row, hit_col, cob_col, ">", garg_pos_args @ ..]
@@ -301,11 +294,11 @@ impl Parser {
                                 )
                             }
                             [] => {
-                                printer::print_error(NEED_HIT_COL_COB_COL);
+                                printer::print_error(&t!("need_hit_col_cob_col"));
                                 return ParseResult::Err;
                             }
                             [_] => {
-                                printer::print_error(NEED_COB_COL);
+                                printer::print_error(&t!("need_cob_col"));
                                 return ParseResult::Err;
                             }
                             [hit_col, cob_col] => {
@@ -388,11 +381,11 @@ impl Parser {
         match input.split_whitespace().collect::<Vec<&str>>().as_slice() {
             ["doom", extra_args @ ..] => match extra_args {
                 [] => {
-                    printer::print_error(NEED_DOOM_ROW_DOOM_COL);
+                    printer::print_error(&t!("need_doom_row_doom_col"));
                     ParseResult::Err
                 }
                 [_] => {
-                    printer::print_error(NEED_DOOM_ROW);
+                    printer::print_error(&t!("need_doom_row"));
                     ParseResult::Err
                 }
                 [doom_row, doom_col, garg_pos_args @ ..] => {
@@ -518,7 +511,7 @@ impl Parser {
                 } else {
                     match extra_args {
                         [] => {
-                            printer::print_error(NEED_COB_COL);
+                            printer::print_error(&t!("need_cob_col"));
                             return ParseResult::Err;
                         }
                         [cob_col] => {
@@ -588,11 +581,11 @@ impl Parser {
                     if !self.scene.is_roof() {
                         match extra_args {
                             [] | [">", ..] => {
-                                printer::print_error(NEED_HIT_ROW_HIT_COL_RANGE);
+                                printer::print_error(&t!("need_hit_row_hit_col_range"));
                                 return ParseResult::Err;
                             }
                             [_] | [_, ">", ..] => {
-                                printer::print_error(NEED_HIT_COL_RANGE);
+                                printer::print_error(&t!("need_hit_col_range"));
                                 return ParseResult::Err;
                             }
                             [hit_row, min_max_hit_col, ">", garg_pos_args @ ..] => {
@@ -644,15 +637,15 @@ impl Parser {
                     } else {
                         match extra_args {
                             [] | [">", ..] => {
-                                printer::print_error(NEED_HIT_ROW_HIT_COL_RANGE_COB_COL);
+                                printer::print_error(&t!("need_hit_row_hit_col_range_cob_col"));
                                 return ParseResult::Err;
                             }
                             [_] | [_, ">", ..] => {
-                                printer::print_error(NEED_HIT_COL_RANGE_COB_COL);
+                                printer::print_error(&t!("need_hit_col_range_cob_col"));
                                 return ParseResult::Err;
                             }
                             [_, _] | [_, _, ">", ..] => {
-                                printer::print_error(NEED_COB_COL);
+                                printer::print_error(&t!("need_cob_col"));
                                 return ParseResult::Err;
                             }
                             [hit_row, min_max_hit_col, cob_col, ">", garg_pos_args @ ..] => {
@@ -786,11 +779,11 @@ impl Parser {
         match input.split_whitespace().collect::<Vec<&str>>().as_slice() {
             ["imp", extra_args @ ..] => match extra_args {
                 [] => {
-                    printer::print_error(NEED_GARG_X_OR_IMP_X);
+                    printer::print_error(&t!("need_garg_x_or_imp_x"));
                     ParseResult::Err
                 }
                 ["garg"] => {
-                    printer::print_error(NEED_IMP_X_RANGE);
+                    printer::print_error(&t!("need_imp_x_range"));
                     ParseResult::Err
                 }
                 ["garg", imp_x] => {
@@ -810,7 +803,7 @@ impl Parser {
                                     return ParseResult::Err;
                                 }
                                 Err(EvalError::Type(v)) => {
-                                    printer::print_error_with_input(IMP_X_SHOULD_BE_INTEGER, &v);
+                                    printer::print_error_with_input(&t!("imp_x_should_be_integer"), &v);
                                     return ParseResult::Err;
                                 }
                             };
@@ -818,8 +811,7 @@ impl Parser {
                                 constants::min_max_garg_pos_of_imp_x_by_scene(imp_x, is_roof)
                             else {
                                 printer::print_error_with_input(
-                                    &IMP_X_SHOULD_BE_IN_RANGE
-                                        .format(&[min_valid_imp_x, max_valid_imp_x]),
+                                    &t!("imp_x_should_be_in_range", min = min_valid_imp_x, max = max_valid_imp_x),
                                     imp_x.to_string().as_str(),
                                 );
                                 return ParseResult::Err;
@@ -839,7 +831,7 @@ impl Parser {
                                     return ParseResult::Err;
                                 }
                                 Err(EvalError::Type(v)) => {
-                                    printer::print_error_with_input(IMP_X_SHOULD_BE_INTEGER, &v);
+                                    printer::print_error_with_input(&t!("imp_x_should_be_integer"), &v);
                                     return ParseResult::Err;
                                 }
                             };
@@ -850,7 +842,7 @@ impl Parser {
                                     return ParseResult::Err;
                                 }
                                 Err(EvalError::Type(v)) => {
-                                    printer::print_error_with_input(IMP_X_SHOULD_BE_INTEGER, &v);
+                                    printer::print_error_with_input(&t!("imp_x_should_be_integer"), &v);
                                     return ParseResult::Err;
                                 }
                             };
@@ -863,8 +855,7 @@ impl Parser {
                             let clamped_max_imp_x = max_imp_x.min(max_valid_imp_x);
                             if clamped_min_imp_x > clamped_max_imp_x {
                                 printer::print_error_with_input(
-                                    &IMP_X_SHOULD_BE_IN_RANGE
-                                        .format(&[min_valid_imp_x, max_valid_imp_x]),
+                                    &t!("imp_x_should_be_in_range", min = min_valid_imp_x, max = max_valid_imp_x),
                                     imp_x,
                                 );
                                 return ParseResult::Err;
@@ -877,8 +868,7 @@ impl Parser {
                                 )
                             else {
                                 printer::print_error_with_input(
-                                    &IMP_X_SHOULD_BE_IN_RANGE
-                                        .format(&[min_valid_imp_x, max_valid_imp_x]),
+                                    &t!("imp_x_should_be_in_range", min = min_valid_imp_x, max = max_valid_imp_x),
                                     imp_x,
                                 );
                                 return ParseResult::Err;
@@ -904,13 +894,13 @@ impl Parser {
                             return ParseResult::Err;
                         }
                         Err(EvalError::Type(v)) => {
-                            printer::print_error_with_input(GARG_X_SHOULD_BE_NUMBER, &v);
+                            printer::print_error_with_input(&t!("garg_x_should_be_number"), &v);
                             return ParseResult::Err;
                         }
                     };
                     if garg_x_value <= 400.0 {
                         printer::print_error_with_input(
-                            &MIN_GARG_X_SHOULD_BE_LARGER_THAN_LOWER_BOUND.format(&[400]),
+                            &t!("min_garg_x_should_be_larger_than_lower_bound", bound = 400),
                             garg_x,
                         );
                         return ParseResult::Err;
@@ -940,7 +930,7 @@ impl Parser {
                 Err(())
             }
             Err(EvalError::Type(v)) => {
-                printer::print_error_with_input(ICE_TIMES_SHOULD_BE_INTEGER, &v);
+                printer::print_error_with_input(&t!("ice_times_should_be_integer"), &v);
                 Err(())
             }
             Ok(ice_times) => Ok(ice_times),
@@ -954,12 +944,12 @@ impl Parser {
                 Err(())
             }
             Err(EvalError::Type(v)) => {
-                printer::print_error_with_input(COB_TIME_SHOULD_BE_INTEGER, &v);
+                printer::print_error_with_input(&t!("cob_time_should_be_integer"), &v);
                 Err(())
             }
             Ok(cob_time) if cob_time < 0 => {
                 printer::print_error_with_input(
-                    COB_TIME_SHOULD_BE_NON_NEGATIVE,
+                    &t!("cob_time_should_be_non_negative"),
                     cob_time.to_string().as_str(),
                 );
                 Err(())
@@ -975,7 +965,7 @@ impl Parser {
                 Err(())
             }
             Err(EvalError::Type(v)) => {
-                printer::print_error_with_input(DELAY_TIME_SHOULD_BE_INTEGER, &v);
+                printer::print_error_with_input(&t!("delay_time_should_be_integer"), &v);
                 Err(())
             }
             Ok(delay) => Ok(delay),
@@ -993,12 +983,12 @@ impl Parser {
                 Err(())
             }
             Err(EvalError::Type(v)) => {
-                printer::print_error_with_input(HIT_ROW_SHOULD_BE_INTEGER, &v);
+                printer::print_error_with_input(&t!("hit_row_should_be_integer"), &v);
                 Err(())
             }
             Ok(hit_row) if !(valid_hit_rows.contains(&hit_row)) => {
                 printer::print_error_with_input(
-                    &HIT_ROW_OUT_OF_RANGE.format(&[format!("{:?}", valid_hit_rows)]),
+                    &t!("hit_row_out_of_range", range = format!("{:?}", valid_hit_rows)),
                     hit_row.to_string().as_str(),
                 );
                 Err(())
@@ -1014,12 +1004,12 @@ impl Parser {
                 Err(())
             }
             Err(EvalError::Type(v)) => {
-                printer::print_error_with_input(HIT_COL_SHOULD_BE_NUMBER, &v);
+                printer::print_error_with_input(&t!("hit_col_should_be_number"), &v);
                 Err(())
             }
             Ok(hit_col) if !((0. ..10.).contains(&hit_col)) => {
                 printer::print_error_with_input(
-                    HIT_COL_SHOULD_BE_IN_RANGE,
+                    &t!("hit_col_should_be_in_range"),
                     hit_col.to_string().as_str(),
                 );
                 Err(())
@@ -1028,7 +1018,7 @@ impl Parser {
                 None => Ok(hit_col),
                 Some(corrected_hit_col) => {
                     printer::print_warning(
-                        &HIT_COL_TIMES_EIGHTY_NOT_INTEGER.format(&[hit_col, corrected_hit_col]),
+                        &t!("hit_col_times_eighty_not_integer", col = hit_col, corrected = corrected_hit_col),
                     );
                     Ok(corrected_hit_col)
                 }
@@ -1047,11 +1037,11 @@ impl Parser {
             .as_slice()
         {
             [] => {
-                printer::print_error(NEED_MIN_MAX_HIT_COL);
+                printer::print_error(&t!("need_min_max_hit_col"));
                 Err(())
             }
             [_] => {
-                printer::print_error(NEED_MAX_HIT_COL);
+                printer::print_error(&t!("need_max_hit_col"));
                 Err(())
             }
             [min_hit_col, max_hit_col] => {
@@ -1065,7 +1055,7 @@ impl Parser {
                         let max_hit_pixel = (max_hit_col * 80.).round() as i32;
                         if min_hit_pixel > max_hit_pixel {
                             printer::print_error_with_input(
-                                MIN_COL_SHOULD_BE_SMALLER_THAN_MAX_COL,
+                                &t!("min_col_should_be_smaller_than_max_col"),
                                 format!("{}, {}", min_hit_col, max_hit_col).as_str(),
                             );
                             return Err(());
@@ -1088,12 +1078,12 @@ impl Parser {
                 Err(())
             }
             Err(EvalError::Type(v)) => {
-                printer::print_error_with_input(COB_COL_SHOULD_BE_INTEGER, &v);
+                printer::print_error_with_input(&t!("cob_col_should_be_integer"), &v);
                 Err(())
             }
             Ok(cob_col) if !((1..=8).contains(&cob_col)) => {
                 printer::print_error_with_input(
-                    COB_COL_SHOULD_BE_IN_RANGE,
+                    &t!("cob_col_should_be_in_range"),
                     cob_col.to_string().as_str(),
                 );
                 Err(())
@@ -1113,12 +1103,12 @@ impl Parser {
                 Err(())
             }
             Err(EvalError::Type(v)) => {
-                printer::print_error_with_input(DOOM_ROW_SHOULD_BE_INTEGER, &v);
+                printer::print_error_with_input(&t!("doom_row_should_be_integer"), &v);
                 Err(())
             }
             Ok(doom_row) if !(valid_doom_rows.contains(&doom_row)) => {
                 printer::print_error_with_input(
-                    &DOOM_ROW_OUT_OF_RANGE.format(&[format!("{:?}", valid_doom_rows)]),
+                    &t!("doom_row_out_of_range", range = format!("{:?}", valid_doom_rows)),
                     doom_row.to_string().as_str(),
                 );
                 Err(())
@@ -1134,12 +1124,12 @@ impl Parser {
                 Err(())
             }
             Err(EvalError::Type(v)) => {
-                printer::print_error_with_input(DOOM_COL_SHOULD_BE_INTEGER, &v);
+                printer::print_error_with_input(&t!("doom_col_should_be_integer"), &v);
                 Err(())
             }
             Ok(doom_col) if !((1..=9).contains(&doom_col)) => {
                 printer::print_error_with_input(
-                    DOOM_COL_SHOULD_BE_IN_RANGE,
+                    &t!("doom_col_should_be_in_range"),
                     doom_col.to_string().as_str(),
                 );
                 Err(())
@@ -1155,7 +1145,7 @@ impl Parser {
     ) -> Result<ParsedGargPos, ()> {
         let (garg_rows, min_max_garg_x, ice_flag) = match garg_pos_args {
             [] => {
-                printer::print_error(NEED_GARG_ROWS_X_RANGE_ICE_FLAG);
+                printer::print_error(&t!("need_garg_rows_x_range_ice_flag"));
                 (Err(()), Err(()), Err(()))
             }
             [garg_rows] => (
@@ -1204,7 +1194,7 @@ impl Parser {
                 Err(())
             }
             Err(EvalError::Type(v)) => {
-                printer::print_error_with_input(GARG_ROWS_SHOULD_BE_INTEGER, &v);
+                printer::print_error_with_input(&t!("garg_rows_should_be_integer"), &v);
                 Err(())
             }
             Ok(garg_rows) => {
@@ -1215,7 +1205,7 @@ impl Parser {
                     .collect::<Vec<i32>>();
                 if filtered_garg_rows.is_empty() {
                     printer::print_error_with_input(
-                        &GARG_ROWS_ALL_OUT_OF_RANGE.format(&[format!("{:?}", valid_garg_rows)]),
+                        &t!("garg_rows_all_out_of_range", range = format!("{:?}", valid_garg_rows)),
                         format!("{:?}", garg_rows).as_str(),
                     );
                     Err(())
@@ -1237,11 +1227,11 @@ impl Parser {
             .as_slice()
         {
             [] => {
-                printer::print_error(NEED_MIN_MAX_GARG_X);
+                printer::print_error(&t!("need_min_max_garg_x"));
                 Err(())
             }
             [_] => {
-                printer::print_error(NEED_MAX_GARG_X);
+                printer::print_error(&t!("need_max_garg_x"));
                 Err(())
             }
             [min_garg_x, max_garg_x] => {
@@ -1251,32 +1241,30 @@ impl Parser {
                         Err(())
                     }
                     (Err(EvalError::Type(v)), _) => {
-                        printer::print_error_with_input(MIN_GARG_X_SHOULD_BE_NUMBER, &v);
+                        printer::print_error_with_input(&t!("min_garg_x_should_be_number"), &v);
                         Err(())
                     }
                     (_, Err(EvalError::Type(v))) => {
-                        printer::print_error_with_input(MAX_GARG_X_SHOULD_BE_NUMBER, &v);
+                        printer::print_error_with_input(&t!("max_garg_x_should_be_number"), &v);
                         Err(())
                     }
                     (Ok(min_garg_x), Ok(max_garg_x)) if min_garg_x > max_garg_x => {
                         printer::print_error_with_input(
-                            MIN_GARG_X_SHOULD_BE_SMALLER_THAN_MAX_GARG_X,
+                            &t!("min_garg_x_should_be_smaller_than_max_garg_x"),
                             format!("{}, {}", min_garg_x, max_garg_x).as_str(),
                         );
                         Err(())
                     }
                     (Ok(min_garg_x), _) if min_garg_x <= game::MIN_GARG_X => {
                         printer::print_error_with_input(
-                            &MIN_GARG_X_SHOULD_BE_LARGER_THAN_LOWER_BOUND
-                                .format(&[game::MIN_GARG_X]),
+                            &t!("min_garg_x_should_be_larger_than_lower_bound", bound = game::MIN_GARG_X),
                             format!("{}", min_garg_x).as_str(),
                         );
                         Err(())
                     }
                     (_, Ok(max_garg_x)) if max_garg_x > game::MAX_GARG_X => {
                         printer::print_error_with_input(
-                            &MAX_GARG_X_SHOULD_BE_SMALLER_THAN_UPPER_BOUND
-                                .format(&[game::MAX_GARG_X]),
+                            &t!("max_garg_x_should_be_smaller_than_upper_bound", bound = game::MAX_GARG_X),
                             format!("{}", max_garg_x).as_str(),
                         );
                         Err(())
@@ -1297,7 +1285,7 @@ impl Parser {
         } else if *ice_mode == "i" {
             Ok(100000)
         } else {
-            printer::print_error_with_input(ICE_FLAG_SHOULD_BE_U_OR_I, ice_mode);
+            printer::print_error_with_input(&t!("ice_flag_should_be_u_or_i"), ice_mode);
             Err(())
         }
     }

@@ -5,10 +5,6 @@
 //! above/same/below in the chosen scene) that fully damages it, plus a 全伤 flag.
 
 use super::{fmt_col, fmt_range, median, wave_lookup, ExplodeKind, SceneArg, Wave};
-#[cfg(feature = "en")]
-use crate::lang::en::*;
-#[cfg(feature = "zh")]
-use crate::lang::zh::*;
 use crate::tables::{self, FAST, SLOW};
 
 // 屋顶爆心y per cob-tail column (1..=8); index 0 unused.
@@ -33,9 +29,9 @@ fn scene_geom(scene: SceneArg, roof_tail: Option<i32>) -> Result<SceneGeom, Stri
             spacing: 100.0,
         },
         SceneArg::Re => {
-            let tail = roof_tail.ok_or_else(|| COORD_NEED_ROOF_TAIL.to_string())?;
+            let tail = roof_tail.ok_or_else(|| t!("coord_need_roof_tail").to_string())?;
             if !(1..=8).contains(&tail) {
-                return Err(COORD_BAD_ROOF_TAIL.to_string());
+                return Err(t!("coord_bad_roof_tail").to_string());
             }
             SceneGeom {
                 explode_center: ROOF_EXPLODE_Y[tail as usize],
@@ -81,10 +77,10 @@ pub fn run(
     zombies: Option<&str>,
 ) -> Result<(), String> {
     if time < 0 {
-        return Err(CALC_BAD_TIME.to_string());
+        return Err(t!("calc_bad_time").to_string());
     }
     if kind == ExplodeKind::Doom {
-        return Err(COORD_DOOM_UNSUPPORTED.to_string());
+        return Err(t!("coord_doom_unsupported").to_string());
     }
     let geom = scene_geom(scene, roof_tail)?;
     let radius = 115.0_f64; // cob
@@ -101,12 +97,12 @@ pub fn run(
     );
     outln!(
         "  {:<16} {:<13} {:<4} {:<13} {:<13} {}",
-        COORD_HDR_ZOMBIE,
-        COORD_HDR_X,
-        COORD_HDR_FULL,
-        COORD_HDR_ABOVE,
-        COORD_HDR_SAME,
-        COORD_HDR_BELOW
+        t!("coord_hdr_zombie"),
+        t!("coord_hdr_x"),
+        t!("coord_hdr_full"),
+        t!("coord_hdr_above"),
+        t!("coord_hdr_same"),
+        t!("coord_hdr_below")
     );
 
     for v in tables::select(zombies) {

@@ -74,18 +74,28 @@ pub fn pos(v: &Value, p: &Params, compact: bool) {
     if time_mode {
         outln!(
             "  {:<6} {:<8} {:<14} {:<10} {:<8} {:<8}",
-            "wave", "zombie", "到达率", "到达数", "时刻min", "时刻max"
+            "wave",
+            "zombie",
+            t!("seml_arrival_rate"),
+            t!("seml_arrival_count"),
+            t!("seml_tick_min"),
+            t!("seml_tick_max")
         );
     } else {
         outln!(
             "  {:<6} {:<8} {:<14} {:<10} {:<8} {:<8}",
-            "wave", "zombie", "存活率", "存活数", "坐标min", "坐标max"
+            "wave",
+            "zombie",
+            t!("seml_alive_rate"),
+            t!("seml_alive_count"),
+            t!("seml_x_min"),
+            t!("seml_x_max")
         );
     }
 
     for (col, st) in columns.iter().zip(stats.iter()) {
         let wave = i(col, "waveIdx") + 1;
-        let zname = zombie::name(i(col, "zombieType") as i32);
+        let zname = zombie::name_i18n(i(col, "zombieType") as i32);
         let total = i(st, "totalCount");
         if time_mode {
             let arrived = i(st, "arrivedCount");
@@ -152,13 +162,13 @@ fn print_pos_cumulative(time_mode: bool, columns: &[Value], stats: &[Value], sho
             format!(
                 "w{}{}",
                 i(col, "waveIdx") + 1,
-                zombie::name(i(col, "zombieType") as i32)
+                zombie::name_i18n(i(col, "zombieType") as i32)
             )
         })
         .collect();
     let mut cumulative = vec![0_i64; stats.len()];
 
-    outln!("\n  累积概率");
+    outln!("\n  {}", t!("seml_cumulative_prob"));
     out!("  {:<8}", if time_mode { "tick" } else { "x" });
     for label in &labels {
         out!(" {:<16}", label);
@@ -240,7 +250,10 @@ pub fn smash(v: &Value, p: &Params, compact: bool) {
     // Per-wave summary.
     outln!(
         "  {:<6} {:<16} {:<10} {}",
-        "wave", "砸率", "砸/总", "分行 (1..6)"
+        "wave",
+        t!("seml_smash_rate"),
+        t!("seml_smash_over_total"),
+        t!("seml_by_row")
     );
     for s in summary {
         let wave = i(s, "wave");
@@ -275,7 +288,7 @@ pub fn smash(v: &Value, p: &Params, compact: bool) {
                 )
             })
             .collect();
-        outln!("\n  按有效操作:");
+        outln!("\n  {}", t!("seml_by_effective_ops"));
         for row in table {
             let ops = effective_smash_ops(&actions, arr(row, "opStates"));
             let smashed = i(row, "smashedGargCount");
@@ -343,7 +356,11 @@ pub fn explode(v: &Value, _p: &Params, compact: bool) {
         );
         outln!(
             "    {:<8} {:<10} {:<10} {:<10} {:<12}",
-            "tick", "炮伤↑", "炮伤=", "炮伤↓", "损伤"
+            "tick",
+            t!("seml_dmg_upper"),
+            t!("seml_dmg_same"),
+            t!("seml_dmg_lower"),
+            t!("seml_hp_loss")
         );
 
         let loss = arr(wave, "lossInfos");
@@ -380,9 +397,8 @@ pub fn refresh(v: &Value, p: &Params, compact: bool) {
         let mean = f(col, "averageAccidentRate").unwrap_or(0.0) * 100.0;
         let se = f(col, "averageAccidentRateSe").unwrap_or(0.0) * 100.0;
         outln!(
-            "  组 {}: 平均意外率 {}",
-            ci + 1,
-            fmt_pct(mean, se, p.show_std)
+            "  {}",
+            t!("seml_refresh_group", n = ci + 1, rate = fmt_pct(mean, se, p.show_std))
         );
         if compact {
             continue;
@@ -392,13 +408,13 @@ pub fn refresh(v: &Value, p: &Params, compact: bool) {
                 .iter()
                 .filter_map(|t| {
                     let id = t.as_i64().unwrap_or(0) as i32;
-                    (id != zombie::YETI).then(|| zombie::name(id))
+                    (id != zombie::YETI).then(|| zombie::name_i18n(id))
                 })
                 .collect();
             let rmean = f(row, "mean").unwrap_or(0.0) * 100.0;
             let rse = f(row, "se").unwrap_or(0.0) * 100.0;
             let label = if types.is_empty() {
-                "无".to_string()
+                t!("seml_none").to_string()
             } else {
                 types.join("")
             };
@@ -417,7 +433,10 @@ pub fn pogo(v: &Value, _p: &Params, compact: bool) {
     outln!("seml pogo start_tick={} wave_length={}", start, wave_len);
     outln!(
         "  {:<8} {:<14} {:<14} {:<14}",
-        "tick", "炮行↑", "炮行=", "炮行↓"
+        "tick",
+        t!("seml_row_upper"),
+        t!("seml_row_same"),
+        t!("seml_row_lower")
     );
 
     let fmt_range = |r: &Value| -> String {

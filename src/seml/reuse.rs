@@ -23,7 +23,10 @@ struct Shot {
 pub fn run_text(text: &str, compact: bool, strict: bool) -> Result<(), String> {
     let parsed = parser::parse(text, strict)?;
     // `parse_int_arg` already guarantees ncobs > 0 when present.
-    let ncobs = parsed.params.ncobs.ok_or("请提供炮数 (ncobs:N)")? as usize;
+    let ncobs = parsed
+        .params
+        .ncobs
+        .ok_or_else(|| t!("seml_need_ncobs").to_string())? as usize;
     let looping = parsed.params.r#loop.unwrap_or(false);
 
     // One cycle of shots. A PP/DD cob contributes one shot per landing position.
@@ -52,7 +55,7 @@ pub fn run_text(text: &str, compact: bool, strict: bool) -> Result<(), String> {
     let waves_per_cycle = parsed.config.waves.len() as i32;
     let per_cycle = base.len();
     if per_cycle == 0 {
-        return Err("未找到用炮操作".to_string());
+        return Err(t!("seml_no_cob_action").to_string());
     }
 
     outln!("seml reuse ncobs={} loop={}", ncobs, looping);

@@ -1,0 +1,259 @@
+_version: 2
+
+# ── validate_garg_x_range ──────────────────────────────────────────────
+garg_x_range_cancelled:
+  en: "gargantuars with x ≤ 400 do not throw imps; calculation skipped."
+  zh: "x坐标≤400的巨人不会投掷小鬼, 跳过计算."
+garg_x_range_modified:
+  en: "gargantuars with x ≤ 400 do not throw imps; x = %{min}~%{max} is used instead."
+  zh: "x坐标≤400的巨人不会投掷小鬼, 改用%{min}~%{max}计算."
+
+# ── parse_delay ────────────────────────────────────────────────────────
+need_hit_row_hit_col:
+  en: "Please provide cob hit row and cob hit col."
+  zh: "请提供炮落点行、炮落点列"
+need_hit_col:
+  en: "Please provide cob hit col."
+  zh: "请提供炮落点列"
+need_hit_row_hit_col_cob_col:
+  en: "Please provide cob hit row, cob hit col, and cob tail col."
+  zh: "请提供炮落点行、炮落点列、炮尾所在列"
+need_hit_col_cob_col:
+  en: "Please provide cob hit col and cob tail col."
+  zh: "请提供炮落点列、炮尾所在列"
+need_cob_col:
+  en: "Please provide cob tail col."
+  zh: "请提供炮尾所在列"
+
+# ── parse_doom ─────────────────────────────────────────────────────────
+need_doom_row_doom_col:
+  en: "Please provide doom row and doom col."
+  zh: "请提供核所在行、核所在列"
+need_doom_row:
+  en: "Please provide doom row."
+  zh: "请提供核所在列"
+
+# ── parse_find_max_delay ───────────────────────────────────────────────
+need_hit_row_hit_col_range:
+  en: "Please provide cob hit row and comma-separated cob hit col range."
+  zh: "请提供炮落点行、炮落点列范围(逗号分隔)"
+need_hit_col_range:
+  en: "Please provide comma-separated cob hit col range."
+  zh: "请提供炮落点列范围(逗号分隔最小、最大值)"
+need_hit_row_hit_col_range_cob_col:
+  en: "Please provide cob hit row, comma-separated cob hit col range, and cob tail col."
+  zh: "请提供炮落点行、炮落点列范围(逗号分隔)、炮尾所在列"
+need_hit_col_range_cob_col:
+  en: "Please provide comma-separated cob hit col range and cob tail col."
+  zh: "请提供炮落点列范围(逗号分隔最小、最大值)、炮尾所在列"
+
+# ── parse_imp ──────────────────────────────────────────────────────────
+need_garg_x_or_imp_x:
+  en: "Please provide garg x, or use: imp garg [imp x]."
+  zh: "请提供巨人x坐标，或使用 imp garg 小鬼x坐标"
+need_imp_x_range:
+  en: "Please provide imp x (integer), or two comma-separated integers."
+  zh: "请提供小鬼x坐标(整数)，或逗号分隔的两个整数"
+imp_x_should_be_integer:
+  en: "imp x should be integer"
+  zh: "小鬼x坐标应为整数"
+imp_x_should_be_in_range:
+  en: "should satisfy %{min} ≤ imp x ≤ %{max}"
+  zh: "应满足%{min}≤小鬼x坐标≤%{max}"
+garg_x_should_be_number:
+  en: "garg x should be number"
+  zh: "巨人x坐标应为数字"
+
+# ── parse_ice_times / cob_time / delay_time ────────────────────────────
+ice_times_should_be_integer:
+  en: "ice times should be integer"
+  zh: "用冰时机应为整数"
+cob_time_should_be_integer:
+  en: "cob time should be integer"
+  zh: "激活时机应为整数"
+cob_time_should_be_non_negative:
+  en: "cob time should ≥ 0"
+  zh: "激活时机应≥0"
+delay_time_should_be_integer:
+  en: "delay time should be integer"
+  zh: "炮生效延时应为整数"
+
+# ── parse hit row / hit col ────────────────────────────────────────────
+hit_row_should_be_integer:
+  en: "hit row should be integer"
+  zh: "炮落点行应为整数"
+hit_row_out_of_range:
+  en: "hit row is out of range %{range}"
+  zh: "炮落点行超出范围%{range}"
+hit_col_should_be_number:
+  en: "hit col should be number"
+  zh: "炮落点列应为数字"
+hit_col_should_be_in_range:
+  en: "should satisfy 0 ≤ hit col < 10"
+  zh: "应满足0≤炮落点列<10"
+hit_col_times_eighty_not_integer:
+  en: "current hit col %{col} * 80 is not an integer; using col %{corrected} instead."
+  zh: "当前落点列%{col}×80不是整数, 改用%{corrected}列计算."
+
+# ── parse_min_max_hit_col ──────────────────────────────────────────────
+need_min_max_hit_col:
+  en: "Please provide min and max hit col."
+  zh: "请提供炮落点列最小值、最大值"
+need_max_hit_col:
+  en: "Please provide max hit col."
+  zh: "请提供炮落点列最大值"
+min_col_should_be_smaller_than_max_col:
+  en: "should satisfy min hit col ≤ max hit col"
+  zh: "应满足炮落点列最小值≤最大值"
+
+# ── parse_cob_col ──────────────────────────────────────────────────────
+cob_col_should_be_integer:
+  en: "cob tail col should be integer"
+  zh: "炮尾所在列应为整数"
+cob_col_should_be_in_range:
+  en: "should satisfy 1 ≤ cob tail col ≤ 8"
+  zh: "应满足1≤炮尾所在列≤8"
+
+# ── parse_doom_row / doom_col ──────────────────────────────────────────
+doom_row_should_be_integer:
+  en: "doom row should be integer"
+  zh: "核所在行应为整数"
+doom_row_out_of_range:
+  en: "doom row is out of range %{range}"
+  zh: "核所在行超出范围%{range}"
+doom_col_should_be_integer:
+  en: "doom col should be integer"
+  zh: "核所在列应为整数"
+doom_col_should_be_in_range:
+  en: "should satisfy 1 ≤ doom col ≤ 9"
+  zh: "应满足1≤核所在列≤9"
+
+# ── parse_garg_pos ─────────────────────────────────────────────────────
+need_garg_rows_x_range_ice_flag:
+  en: "Please provide garg row(s), garg x range (optional), and ice mode (u/i, optional)."
+  zh: "请提供巨人所在行、x坐标范围(可选)、速度模式(u/i, 可选)"
+garg_rows_should_be_integer:
+  en: "garg rows should be comma-separated integers"
+  zh: "巨人所在行应为逗号分隔的整数"
+garg_rows_all_out_of_range:
+  en: "all garg rows are out of range %{range}"
+  zh: "巨人所在行均超出范围%{range}"
+
+# ── parse_min_max_garg_x ───────────────────────────────────────────────
+need_min_max_garg_x:
+  en: "Please provide min and max garg x."
+  zh: "请提供巨人x坐标最小值、最大值"
+need_max_garg_x:
+  en: "Please provide max garg x."
+  zh: "请提供巨人x坐标最大值"
+min_garg_x_should_be_number:
+  en: "min garg x should be number"
+  zh: "巨人x坐标最小值应为数字"
+max_garg_x_should_be_number:
+  en: "max garg x should be number"
+  zh: "巨人x坐标最大值应为数字"
+min_garg_x_should_be_smaller_than_max_garg_x:
+  en: "should satisfy min garg x ≤ max garg x"
+  zh: "应满足巨人x坐标最小值≤最大值"
+min_garg_x_should_be_larger_than_lower_bound:
+  en: "min garg x should > %{bound}"
+  zh: "应满足巨人x坐标最小值>%{bound}"
+max_garg_x_should_be_smaller_than_upper_bound:
+  en: "max garg x should ≤ %{bound}"
+  zh: "应满足巨人x坐标最大值≤%{bound}"
+
+# ── parse_ice_flag ─────────────────────────────────────────────────────
+ice_flag_should_be_u_or_i:
+  en: "ice mode should be u or i"
+  zh: "计算模式应为u/i(原速/减速)"
+
+# ── shared "got" label (game.rs error detail) ──────────────────────────
+input_error_got:
+  en: "got"
+  zh: "当前为"
+
+# ── puc coord ──────────────────────────────────────────────────────────
+coord_need_roof_tail:
+  en: "roof scene needs --roof-tail (cob tail column)"
+  zh: "屋顶场合请用 --roof-tail 指定炮尾列"
+coord_bad_roof_tail:
+  en: "roof tail column must be 1..=8"
+  zh: "炮尾列应为 1~8"
+coord_doom_unsupported:
+  en: "coord does not support doom yet"
+  zh: "落点计算器暂不支持核武"
+coord_hdr_zombie:
+  en: "zombie"
+  zh: "僵尸"
+coord_hdr_x:
+  en: "x-range"
+  zh: "坐标范围"
+coord_hdr_full:
+  en: "full"
+  zh: "全伤"
+coord_hdr_above:
+  en: "above"
+  zh: "收上"
+coord_hdr_same:
+  en: "same"
+  zh: "收本"
+coord_hdr_below:
+  en: "below"
+  zh: "收下"
+
+# ── puc time ───────────────────────────────────────────────────────────
+time_bad_row:
+  en: "cob row out of range: 1~%{max}"
+  zh: "炮所在行超出范围: 1~%{max}"
+time_need_roof_tail:
+  en: "roof scene needs --roof-tail (cob tail column)"
+  zh: "屋顶场合请用 --roof-tail 指定炮尾列"
+time_bad_roof_tail:
+  en: "roof tail column must be 1..=8"
+  zh: "炮尾列应为 1~8"
+time_bad_col:
+  en: "invalid landing column"
+  zh: "落点列无效"
+time_hdr_zombie:
+  en: "zombie"
+  zh: "僵尸"
+time_hdr_row:
+  en: "row"
+  zh: "路"
+
+# ── puc ipp (热过渡) ───────────────────────────────────────────────────
+ipp_wave_len_nonnegative:
+  en: "wave length should be >= 0"
+  zh: "加速波波长应≥0"
+ipp_back:
+  en: "back"
+  zh: "后院"
+ipp_front:
+  en: "front"
+  zh: "前院"
+ipp_c2:
+  en: "c2"
+  zh: "收二"
+ipp_c3:
+  en: "c3"
+  zh: "收三"
+ipp_roof:
+  en: "roof(col)"
+  zh: "屋顶(列)"
+ipp_above:
+  en: "above"
+  zh: "收上"
+ipp_same:
+  en: "same"
+  zh: "收本"
+ipp_below:
+  en: "below"
+  zh: "收下"
+
+# ── puc extreme + shared time guard ────────────────────────────────────
+extreme_need_walk:
+  en: "need walk time(s)"
+  zh: "请提供行走时间"
+calc_bad_time:
+  en: "time should be >= 0"
+  zh: "时间应≥0"

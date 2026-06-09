@@ -157,3 +157,36 @@ pub fn name(id: i32) -> String {
     };
     n.to_string()
 }
+
+/// Locale-aware display name for the clean-table output (`format.rs`). The `zh`
+/// locale reproduces the vendor single-char glyphs of [`name`]; `en` uses the
+/// 4-char abbreviations. Types without a glyph fall back to the numeric id.
+///
+/// CSV export does NOT use this — it always calls [`name`] for byte-fidelity
+/// with the vendor C++ output.
+pub fn name_i18n(id: i32) -> String {
+    let key = match id {
+        ZOMBIE => "zname_zombie",
+        CONEHEAD => "zname_conehead",
+        POLE_VAULTING => "zname_pole_vaulting",
+        BUCKETHEAD => "zname_buckethead",
+        NEWSPAPER => "zname_newspaper",
+        SCREENDOOR => "zname_screendoor",
+        FOOTBALL => "zname_football",
+        DANCING => "zname_dancing",
+        SNORKEL => "zname_snorkel",
+        ZOMBONI => "zname_zomboni",
+        DOLPHIN_RIDER => "zname_dolphin_rider",
+        JACK_IN_THE_BOX => "zname_jack_in_the_box",
+        BALLOON => "zname_balloon",
+        DIGGER => "zname_digger",
+        POGO => "zname_pogo",
+        BUNGEE => "zname_bungee",
+        LADDER => "zname_ladder",
+        CATAPULT => "zname_catapult",
+        GARGANTUAR => "zname_gargantuar",
+        GIGA_GARGANTUAR => "zname_giga_gargantuar",
+        other => return other.to_string(),
+    };
+    t!(key).to_string()
+}

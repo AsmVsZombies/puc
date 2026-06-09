@@ -25,19 +25,19 @@ pub enum ExplodeKind {
 
 #[derive(Clone, Copy, PartialEq, ValueEnum)]
 pub enum SceneArg {
-    /// Front yard (前院, 5 rows)
+    /// 前院（5 行）
     De,
-    /// Backyard / pool (后院, 6 rows)
+    /// 后院 / 泳池（6 行）
     Pe,
-    /// Roof (屋顶, 5 rows)
+    /// 屋顶（5 行）
     Re,
 }
 
 #[derive(Clone, Copy, PartialEq, ValueEnum)]
 pub enum Equiv {
-    /// 炮等效时间 (0 ice = perfect predictive ice)
+    /// 炮等效时间（0 冰 = 完美预判冰）
     Cob,
-    /// 卡等效时间 (1 ice = perfect predictive ice)
+    /// 卡等效时间（1 冰 = 完美预判冰）
     Card,
 }
 

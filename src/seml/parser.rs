@@ -20,9 +20,9 @@ type R<T> = Result<T, String>;
 
 fn e(line_num: usize, msg: &str, src: &str) -> String {
     if src.is_empty() {
-        format!("第 {} 行: {}", line_num, msg)
+        t!("seml_line_prefix", line = line_num, msg = msg).to_string()
     } else {
-        format!("第 {} 行: {} (位于 \"{}\")", line_num, msg, src)
+        t!("seml_line_prefix_src", line = line_num, msg = msg, src = src).to_string()
     }
 }
 
@@ -171,8 +171,8 @@ pub fn parse(text: &str, strict: bool) -> R<Parsed> {
             // lines (first token contains ':'); bare unknown symbols still error.
             return Err(e(
                 line_num,
-                "未知符号",
-                &format!("{} (使用帮助: https://marketplace.visualstudio.com/items?itemName=Crescendo.seml)", symbol),
+                &t!("seml_unknown_symbol"),
+                &t!("seml_help_hint", symbol = symbol),
             ));
         }
     }
@@ -246,10 +246,10 @@ fn expand_lines(raw: &[String]) -> R<Vec<Line>> {
             let end_wave = parse_natural(&symbol[tilde + 1..]);
             let (start_wave, end_wave) = match (start_wave, end_wave) {
                 (Some(s), Some(en)) => (s, en),
-                _ => return Err(e(line_num, "波数应为正整数", symbol)),
+                _ => return Err(e(line_num, &t!("seml_wave_num_positive_int"), symbol)),
             };
             if start_wave > end_wave {
-                return Err(e(line_num, "起始波数应大于终止波数", symbol));
+                return Err(e(line_num, &t!("seml_start_wave_gt_end"), symbol));
             }
 
             let prev_cur = cur;
@@ -341,7 +341,7 @@ fn parse_scene(config: &mut Config, lines: &[Line]) -> R<()> {
     for Line { line_num, line } in lines {
         if line.starts_with("scene:") {
             if set {
-                return Err(e(*line_num, "参数重复", "scene"));
+                return Err(e(*line_num, &t!("seml_dup_param"), "scene"));
             }
             let scene: String = line.splitn(2, ':').nth(1).unwrap_or("").trim().to_string();
             let upper = scene.to_uppercase();
@@ -357,8 +357,8 @@ fn parse_scene(config: &mut Config, lines: &[Line]) -> R<()> {
             } else {
                 return Err(e(
                     *line_num,
-                    "未知场地",
-                    &format!("{} (支持的场地: DE, NE, PE, FE, RE, ME)", scene),
+                    &t!("seml_unknown_scene"),
+                    &t!("seml_supported_scenes", scene = scene),
                 ));
             }
         }
@@ -372,11 +372,11 @@ fn parse_scene(config: &mut Config, lines: &[Line]) -> R<()> {
 
 fn parse_protect(config: &mut Config, line_num: usize, line: &str) -> R<()> {
     if config.setting.protect.is_some() {
-        return Err(e(line_num, "参数重复", "protect"));
+        return Err(e(line_num, &t!("seml_dup_param"), "protect"));
     }
     let value = line.splitn(2, ':').nth(1).unwrap_or("").trim().to_string();
     if value.is_empty() {
-        return Err(e(line_num, "protect 的值不可为空", line));
+        return Err(e(line_num, &t!("seml_protect_value_empty"), line));
     }
 
     let mut protect: Vec<ProtectPos> = Vec::new();
@@ -385,7 +385,7 @@ fn parse_protect(config: &mut Config, line_num: usize, line: &str) -> R<()> {
         let chopped = chop_suffix(pos_token, "'");
         let chars: Vec<char> = chopped.chars().collect();
         if chars.len() < 2 {
-            return Err(e(line_num, "请提供要保护的行与列", line));
+            return Err(e(line_num, &t!("seml_need_protect_row_col"), line));
         }
         let row = parse_natural(&chars[0].to_string());
         let col = parse_natural(&chars[1].to_string());
@@ -395,7 +395,7 @@ fn parse_protect(config: &mut Config, line_num: usize, line: &str) -> R<()> {
             _ => {
                 return Err(e(
                     line_num,
-                    &format!("保护行应为 1~{} 内的整数", max_rows(&config.setting.scene)),
+                    &t!("seml_protect_row_range", max = max_rows(&config.setting.scene)),
                     &chars[0].to_string(),
                 ))
             }
@@ -406,10 +406,10 @@ fn parse_protect(config: &mut Config, line_num: usize, line: &str) -> R<()> {
             _ => {
                 return Err(e(
                     line_num,
-                    &format!(
-                        "{}所在列应为 {}~9 内的整数",
-                        if is_normal { "普通植物" } else { "炮" },
-                        min_col
+                    &t!(
+                        "seml_col_range",
+                        who = if is_normal { t!("seml_normal_plant") } else { t!("seml_cob") },
+                        min = min_col
                     ),
                     &chars[1].to_string(),
                 ))
@@ -435,7 +435,7 @@ fn parse_protect(config: &mut Config, line_num: usize, line: &str) -> R<()> {
                     vec![col - 1, col]
                 };
                 if prev_cols.iter().any(|pc| new_cols.contains(pc)) {
-                    return Err(e(line_num, "保护位置重叠", pos_token));
+                    return Err(e(line_num, &t!("seml_protect_overlap"), pos_token));
                 }
             }
         }
@@ -458,7 +458,7 @@ fn parse_int_arg(
     line: &str,
 ) -> R<i32> {
     if seen.contains(name) {
-        return Err(e(line_num, "参数重复", name));
+        return Err(e(line_num, &t!("seml_dup_param"), name));
     }
     let value = arg_value(line);
     match parse_natural(&value) {
@@ -466,7 +466,11 @@ fn parse_int_arg(
             seen.insert(name);
             Ok(v)
         }
-        _ => Err(e(line_num, &format!("{} 的值应为正整数", name), &value)),
+        _ => Err(e(
+            line_num,
+            &t!("seml_value_positive_int", name = name),
+            &value,
+        )),
     }
 }
 
@@ -477,7 +481,7 @@ fn parse_bool_arg(
     line: &str,
 ) -> R<Option<bool>> {
     if seen.contains(name) {
-        return Err(e(line_num, "参数重复", name));
+        return Err(e(line_num, &t!("seml_dup_param"), name));
     }
     let value = arg_value(line).to_lowercase();
     match value.as_str() {
@@ -488,7 +492,7 @@ fn parse_bool_arg(
         "false" => Ok(None),
         _ => Err(e(
             line_num,
-            &format!("{} 的值应为 true 或 false", name),
+            &t!("seml_value_bool", name = name),
             &value,
         )),
     }
@@ -505,7 +509,7 @@ fn parse_zombie_type_arg(
     check_acceptable: bool,
 ) -> R<Vec<i32>> {
     if seen.contains(name) {
-        return Err(e(line_num, "参数重复", name));
+        return Err(e(line_num, &t!("seml_dup_param"), name));
     }
     let abbrs = arg_value(line);
     let contain_chinese = !abbrs
@@ -529,8 +533,8 @@ fn parse_zombie_type_arg(
                     let keys: Vec<&str> = zombie::CN_ABBR.iter().map(|(k, _)| *k).collect();
                     return Err(e(
                         line_num,
-                        "未知僵尸类型",
-                        &format!("{} (支持的僵尸类型: {})", abbr, keys.join(",")),
+                        &t!("seml_unknown_zombie"),
+                        &t!("seml_supported_zombies", abbr = abbr, keys = keys.join(",")),
                     ));
                 }
             }
@@ -541,23 +545,23 @@ fn parse_zombie_type_arg(
                     let keys = zombie::en_keys();
                     let mut src = abbr.clone();
                     if let Some(closest) = find_closest_string(&lower, &keys) {
-                        src = format!("{} (您是否要输入 {}?)", abbr, closest);
+                        src = t!("seml_did_you_mean", abbr = abbr, closest = closest).to_string();
                     }
-                    return Err(e(line_num, "未知僵尸类型", &src));
+                    return Err(e(line_num, &t!("seml_unknown_zombie"), &src));
                 }
             }
         };
 
         if check_acceptable && !zombie::ACCEPTABLE.contains(&zombie_type) {
-            return Err(e(line_num, "无法指定此僵尸类型", &abbr));
+            return Err(e(line_num, &t!("seml_cannot_specify_zombie"), &abbr));
         }
         if types.contains(&zombie_type) || prev.contains(&zombie_type) {
-            return Err(e(line_num, "僵尸类型重复", &abbr));
+            return Err(e(line_num, &t!("seml_dup_zombie"), &abbr));
         }
         if zombie::banned(original_scene).contains(&zombie_type) {
             return Err(e(
                 line_num,
-                &format!("{}场地无法指定此僵尸类型", original_scene),
+                &t!("seml_scene_cannot_zombie", scene = original_scene),
                 &abbr,
             ));
         }
@@ -573,7 +577,7 @@ fn parse_zombie_type_arg(
 fn parse_wave(config: &mut Config, line_num: usize, line: &str, avz_time: bool) -> R<()> {
     let tokens: Vec<&str> = line.split(' ').collect();
     if tokens.len() < 2 {
-        return Err(e(line_num, "请提供波长", line));
+        return Err(e(line_num, &t!("seml_need_wave_length"), line));
     }
     let wave_num_token = tokens[0];
     let ice_time_tokens = &tokens[1..tokens.len() - 1];
@@ -585,16 +589,16 @@ fn parse_wave(config: &mut Config, line_num: usize, line: &str, avz_time: bool) 
     } else {
         match parse_natural(chop_prefix(wave_num_token, "w")) {
             Some(n) if (1..=99).contains(&n) => n,
-            _ => return Err(e(line_num, "波数应为正整数", wave_num_token)),
+            _ => return Err(e(line_num, &t!("seml_wave_num_positive_int"), wave_num_token)),
         }
     };
     if (wave_num - 1) < prev_wave_num {
-        return Err(e(line_num, "波数重复", wave_num_token));
+        return Err(e(line_num, &t!("seml_dup_wave_num"), wave_num_token));
     }
     if prev_wave_num + 1 != wave_num {
         return Err(e(
             line_num,
-            &format!("请先设定第 {} 波", prev_wave_num + 1),
+            &t!("seml_need_set_wave_n", n = prev_wave_num + 1),
             wave_num_token,
         ));
     }
@@ -606,8 +610,8 @@ fn parse_wave(config: &mut Config, line_num: usize, line: &str, avz_time: bool) 
     for t in ice_time_tokens {
         match parse_natural(t) {
             Some(v) if v >= min_ice => ice_times.push(v),
-            _ if avz_time => return Err(e(line_num, "avzTime 下用冰时机应为正整数", t)),
-            _ => return Err(e(line_num, "用冰时机应为非负整数", t)),
+            _ if avz_time => return Err(e(line_num, &t!("seml_avztime_ice_positive"), t)),
+            _ => return Err(e(line_num, &t!("seml_ice_nonneg"), t)),
         }
     }
 
@@ -615,7 +619,7 @@ fn parse_wave(config: &mut Config, line_num: usize, line: &str, avz_time: bool) 
 
     if let Some(last_ice) = ice_times.last() {
         if wave_length < *last_ice {
-            return Err(e(line_num, "波长应 ≥ 最后一次用冰时机", line));
+            return Err(e(line_num, &t!("seml_wave_len_ge_last_ice"), line));
         }
     }
 
@@ -635,12 +639,12 @@ fn parse_wave_range(line_num: usize, token: &str) -> R<(Option<i32>, i32)> {
     };
     let wave_length = match parse_natural(length_token) {
         Some(v) if v > 0 => v,
-        _ => return Err(e(line_num, "波长应为正整数", token)),
+        _ => return Err(e(line_num, &t!("seml_wave_len_positive"), token)),
     };
     let start_tick = match start_token {
         Some(s) => match parse_natural(s) {
             Some(v) if v <= wave_length => Some(v),
-            _ => return Err(e(line_num, "起始时刻应 ≤ 波长", s)),
+            _ => return Err(e(line_num, &t!("seml_start_le_wavelen"), s)),
         },
         None => None,
     };
@@ -654,14 +658,14 @@ fn parse_time(line_num: usize, token: &str, prev_time: Option<i32>) -> R<i32> {
     let chopped = chop_prefix(token, "+");
     let time = match parse_natural(chopped) {
         Some(v) if v >= 0 => v,
-        _ => return Err(e(line_num, "时间应为非负整数", chopped)),
+        _ => return Err(e(line_num, &t!("seml_time_nonneg"), chopped)),
     };
     if !is_delay {
         Ok(time)
     } else {
         match prev_time {
             Some(p) => Ok(p + time),
-            None => Err(e(line_num, "没有延迟基准, 请先使用非延迟语句", token)),
+            None => Err(e(line_num, &t!("seml_no_delay_base"), token)),
         }
     }
 }
@@ -689,7 +693,7 @@ fn parse_card_time_and_shovel(
         Some(st) => {
             let shovel_time = parse_time(line_num, &st, Some(card_time))?;
             if shovel_time < card_time {
-                return Err(e(line_num, "铲除时机不可早于用卡时机", &st));
+                return Err(e(line_num, &t!("seml_shovel_before_card"), &st));
             }
             Ok((card_time, Some(shovel_time)))
         }
@@ -730,10 +734,10 @@ fn parse_cob(config: &mut Config, line_num: usize, line: &str, cob_num: i32) -> 
 
     let (time_token, rows_token, col_token) = match (time_token, rows_token, col_token) {
         (Some(t), Some(r), Some(c)) => (*t, *r, *c),
-        _ => return Err(e(line_num, "请提供炮生效时机, 落点行, 落点列", line)),
+        _ => return Err(e(line_num, &t!("seml_need_cob_args"), line)),
     };
     if !tail.is_empty() {
-        return Err(e(line_num, "请删去多余的参数", &tail));
+        return Err(e(line_num, &t!("seml_remove_extra_args"), &tail));
     }
 
     let mut cob_col: Option<i32> = None;
@@ -744,22 +748,22 @@ fn parse_cob(config: &mut Config, line_num: usize, line: &str, cob_num: i32) -> 
         .unwrap_or(false)
     {
         if scene != "ME" {
-            return Err(e(line_num, "只有屋顶场合可以指定炮尾列", symbol));
+            return Err(e(line_num, &t!("seml_cob_tail_roof_only"), symbol));
         }
         let last = symbol.chars().last().unwrap().to_string();
         match parse_natural(&last) {
             Some(v) if (1..=8).contains(&v) => cob_col = Some(v),
-            _ => return Err(e(line_num, "炮尾列应为 1~8 内的整数", &last)),
+            _ => return Err(e(line_num, &t!("seml_cob_tail_range"), &last)),
         }
     } else if scene == "ME" {
-        return Err(e(line_num, "屋顶场合请提供落点列", symbol));
+        return Err(e(line_num, &t!("seml_roof_need_col"), symbol));
     }
 
     let time = parse_time(line_num, time_token, prev_time)?;
     let rows = parse_cob_rows(line_num, rows_token, cob_num, &scene)?;
     let col = match parse_decimal(col_token) {
         Some(v) if (0.0..=10.0).contains(&v) => v,
-        _ => return Err(e(line_num, "落点列应为 0.0~10.0 内的数字", col_token)),
+        _ => return Err(e(line_num, &t!("seml_landing_col_range"), col_token)),
     };
 
     let positions: Vec<CobPos> = rows.iter().map(|&row| CobPos { row, col }).collect();
@@ -778,7 +782,11 @@ fn parse_cob(config: &mut Config, line_num: usize, line: &str, cob_num: i32) -> 
 fn parse_cob_rows(line_num: usize, token: &str, cob_num: i32, scene: &str) -> R<Vec<i32>> {
     let chars: Vec<char> = token.chars().collect();
     if chars.len() != cob_num as usize {
-        return Err(e(line_num, &format!("请提供 {} 个落点行", cob_num), token));
+        return Err(e(
+            line_num,
+            &t!("seml_need_n_landing_rows", n = cob_num),
+            token,
+        ));
     }
     let mut rows: Vec<i32> = Vec::new();
     for c in chars {
@@ -787,7 +795,7 @@ fn parse_cob_rows(line_num: usize, token: &str, cob_num: i32, scene: &str) -> R<
             _ => {
                 return Err(e(
                     line_num,
-                    &format!("落点行应为 1~{} 内的整数", max_rows(scene)),
+                    &t!("seml_landing_row_range", max = max_rows(scene)),
                     &c.to_string(),
                 ))
             }
@@ -816,7 +824,7 @@ fn parse_fodder(config: &mut Config, line_num: usize, line: &str) -> R<()> {
 
     let (time_token, rows_token, col_token) = match (time_token, rows_token, col_token) {
         (Some(t), Some(r), Some(c)) => (*t, *r, *c),
-        _ => return Err(e(line_num, "请提供用卡时机, 用卡行, 用卡列", line)),
+        _ => return Err(e(line_num, &t!("seml_need_card_args"), line)),
     };
 
     let (time, shovel_time) = parse_card_time_and_shovel(line_num, time_token, prev_time)?;
@@ -843,7 +851,7 @@ fn parse_fodder(config: &mut Config, line_num: usize, line: &str) -> R<()> {
     } else {
         let rows_len = rows_token.chars().count();
         if rows_len < 2 {
-            return Err(e(line_num, "请提供至少 2 个用卡行", rows_token));
+            return Err(e(line_num, &t!("seml_need_2_card_rows"), rows_token));
         }
         let (choose, waves) = parse_fodder_args(
             line_num,
@@ -882,13 +890,13 @@ fn parse_fodder_rows(line_num: usize, token: &str, scene: &str) -> R<Vec<(i32, F
             _ => {
                 return Err(e(
                     line_num,
-                    &format!("用卡行应为 1~{} 内的整数", max_rows(scene)),
+                    &t!("seml_card_row_range", max = max_rows(scene)),
                     &chars[i].to_string(),
                 ))
             }
         };
         if rows.iter().any(|(r, _)| *r == row) {
-            return Err(e(line_num, "用卡行重复", &chars[i].to_string()));
+            return Err(e(line_num, &t!("seml_dup_card_row"), &chars[i].to_string()));
         }
         let mut card = Fodder::Normal;
         if let Some(next) = chars.get(i + 1) {
@@ -909,7 +917,7 @@ fn parse_fodder_rows(line_num: usize, token: &str, scene: &str) -> R<Vec<(i32, F
 fn parse_card_col(line_num: usize, token: &str) -> R<i32> {
     match parse_natural(token) {
         Some(c) if (1..=9).contains(&c) => Ok(c),
-        _ => Err(e(line_num, "用卡列应为 1~9 内的整数", token)),
+        _ => Err(e(line_num, &t!("seml_card_col_range"), token)),
     }
 }
 
@@ -918,7 +926,7 @@ fn parse_card_row(line_num: usize, token: &str, scene: &str) -> R<i32> {
         Some(r) if r >= 1 && r <= max_rows(scene) => Ok(r),
         _ => Err(e(
             line_num,
-            &format!("用卡行应为 1~{} 内的整数", max_rows(scene)),
+            &t!("seml_card_row_range", max = max_rows(scene)),
             token,
         )),
     }
@@ -938,16 +946,16 @@ fn parse_fodder_args(
     for token in tokens {
         let (key, value) = match token.split_once(':') {
             Some(kv) => kv,
-            None => return Err(e(line_num, "传参格式应为 [参数]:[值] ", token)),
+            None => return Err(e(line_num, &t!("seml_param_format"), token)),
         };
         if key.is_empty() {
-            return Err(e(line_num, "参数不可为空", token));
+            return Err(e(line_num, &t!("seml_param_empty"), token));
         }
         if value.is_empty() {
-            return Err(e(line_num, "值不可为空", token));
+            return Err(e(line_num, &t!("seml_value_empty"), token));
         }
         if seen.contains(key) {
-            return Err(e(line_num, "参数重复", key));
+            return Err(e(line_num, &t!("seml_dup_param"), key));
         }
         seen.insert(key);
 
@@ -957,7 +965,7 @@ fn parse_fodder_args(
                 _ => {
                     return Err(e(
                         line_num,
-                        &format!("choose 的值应为 1~{} 内的整数", card_num),
+                        &t!("seml_choose_range", max = card_num),
                         value,
                     ))
                 }
@@ -968,14 +976,14 @@ fn parse_fodder_args(
                 match parse_natural(wt) {
                     Some(n) if n >= 1 && n <= curr_wave_num => {
                         if ws.contains(&n) {
-                            return Err(e(line_num, "waves 重复", &n.to_string()));
+                            return Err(e(line_num, &t!("seml_dup_waves"), &n.to_string()));
                         }
                         ws.push(n);
                     }
                     _ => {
                         return Err(e(
                             line_num,
-                            &format!("waves 的值应为 1~{} 内的整数", curr_wave_num),
+                            &t!("seml_waves_range", max = curr_wave_num),
                             value,
                         ))
                     }
@@ -985,14 +993,14 @@ fn parse_fodder_args(
         } else {
             return Err(e(
                 line_num,
-                "未知参数",
-                &format!("{} (支持的参数: choose, waves)", key),
+                &t!("seml_unknown_param"),
+                &t!("seml_supported_params", key = key),
             ));
         }
     }
 
     if must_provide_choose && choose.is_none() {
-        return Err(e(line_num, "必须提供 choose 的值", ""));
+        return Err(e(line_num, &t!("seml_need_choose"), ""));
     }
     Ok((choose.unwrap_or(card_num), waves.unwrap_or_default()))
 }
@@ -1015,10 +1023,10 @@ fn parse_fixed_card(config: &mut Config, line_num: usize, line: &str, plant_type
 
     let (time_token, row_token, col_token) = match (time_token, row_token, col_token) {
         (Some(t), Some(r), Some(c)) => (*t, *r, *c),
-        _ => return Err(e(line_num, "请提供用卡时机, 用卡行, 用卡列", line)),
+        _ => return Err(e(line_num, &t!("seml_need_card_args"), line)),
     };
     if !tail.is_empty() {
-        return Err(e(line_num, "请删去多余的参数", &tail));
+        return Err(e(line_num, &t!("seml_remove_extra_args"), &tail));
     }
 
     let (time, shovel_time) = if symbol == "G" {
@@ -1059,10 +1067,10 @@ fn parse_smart_card(config: &mut Config, line_num: usize, line: &str, plant_type
 
     let (time_token, rows_token, col_token) = match (time_token, rows_token, col_token) {
         (Some(t), Some(r), Some(c)) => (*t, *r, *c),
-        _ => return Err(e(line_num, "请提供用卡时机, 用卡行, 用卡列", line)),
+        _ => return Err(e(line_num, &t!("seml_need_card_args"), line)),
     };
     if !tail.is_empty() {
-        return Err(e(line_num, "请删去多余的参数", &tail));
+        return Err(e(line_num, &t!("seml_remove_extra_args"), &tail));
     }
 
     let rows = parse_smart_card_rows(line_num, rows_token, &scene)?;
@@ -1085,7 +1093,7 @@ fn parse_smart_card(config: &mut Config, line_num: usize, line: &str, plant_type
 fn parse_smart_card_rows(line_num: usize, token: &str, scene: &str) -> R<Vec<i32>> {
     let chars: Vec<char> = token.chars().collect();
     if chars.len() < 2 {
-        return Err(e(line_num, "请提供至少 2 个用卡行", token));
+        return Err(e(line_num, &t!("seml_need_2_card_rows"), token));
     }
     let mut rows: Vec<i32> = Vec::new();
     for c in chars {
@@ -1094,13 +1102,13 @@ fn parse_smart_card_rows(line_num: usize, token: &str, scene: &str) -> R<Vec<i32
             _ => {
                 return Err(e(
                     line_num,
-                    &format!("用卡行应为 1~{} 内的整数", max_rows(scene)),
+                    &t!("seml_card_row_range", max = max_rows(scene)),
                     &c.to_string(),
                 ))
             }
         };
         if rows.contains(&row) {
-            return Err(e(line_num, "用卡行重复", &c.to_string()));
+            return Err(e(line_num, &t!("seml_dup_card_row"), &c.to_string()));
         }
         rows.push(row);
     }
@@ -1114,31 +1122,31 @@ fn parse_set(variables: &mut Vec<(String, f64)>, line_num: usize, line: &str) ->
     let tokens: Vec<&str> = line.split(' ').collect();
     let var_name = match tokens.get(1) {
         Some(v) => *v,
-        None => return Err(e(line_num, "请提供变量名与表达式", line)),
+        None => return Err(e(line_num, &t!("seml_need_var_expr"), line)),
     };
     let expr = tokens.get(2..).map(|s| s.join(" ")).unwrap_or_default();
 
     if var_name.is_empty() {
-        return Err(e(line_num, "变量名不可为空", line));
+        return Err(e(line_num, &t!("seml_var_name_empty"), line));
     }
     if !var_name.is_empty() && var_name.bytes().all(|b| b.is_ascii_digit()) {
-        return Err(e(line_num, "变量名不可为纯数字", var_name));
+        return Err(e(line_num, &t!("seml_var_name_not_numeric"), var_name));
     }
     if expr.is_empty() {
-        return Err(e(line_num, "表达式不可为空", line));
+        return Err(e(line_num, &t!("seml_expr_empty"), line));
     }
     if !expr
         .bytes()
         .all(|b| matches!(b, b'0'..=b'9' | b'+' | b'-' | b'*' | b'/' | b'(' | b')'))
     {
-        return Err(e(line_num, "表达式只能包含数字、运算符与括号", &expr));
+        return Err(e(line_num, &t!("seml_expr_chars"), &expr));
     }
     // The grammar above forbids '.', so every literal is an integer; +/-/* match
     // JS exactly. (Division-with-remainder would differ — evalexpr does integer
     // division — but no SEML uses it.)
     let val = match evalexpr::eval(&expr).ok().and_then(|v| v.as_number().ok()) {
         Some(v) if v.is_finite() => v,
-        _ => return Err(e(line_num, "表达式无效", &expr)),
+        _ => return Err(e(line_num, &t!("seml_expr_invalid"), &expr)),
     };
 
     if let Some(entry) = variables.iter_mut().find(|(n, _)| n == var_name) {
@@ -1155,7 +1163,7 @@ fn current_wave<'a>(config: &'a mut Config, line_num: usize, line: &str) -> R<&'
     config
         .waves
         .last_mut()
-        .ok_or_else(|| e(line_num, "请先设定波次", line))
+        .ok_or_else(|| e(line_num, &t!("seml_set_wave_first"), line))
 }
 
 #[cfg(test)]
@@ -1234,6 +1242,7 @@ PP 225 25 9
 
     #[test]
     fn unknown_zombie_suggests_closest() {
+        rust_i18n::set_locale("zh"); // assert against the default-locale wording
         let text = "scene:PE\ntypes:gigaa\nw 601\nPP 225 25 9\n";
         let err = parse(text, false).map(|_| ()).unwrap_err();
         assert!(err.contains("未知僵尸类型"), "got: {err}");
@@ -1248,6 +1257,7 @@ PP 225 25 9
 
     #[test]
     fn unknown_header_skipped_unless_strict() {
+        rust_i18n::set_locale("zh"); // assert against the default-locale wording
         let text = "scene:PE\nfoo: bar\nw 601\nPP 225 25 9\n";
         // Lenient (default): the unknown header line is skipped.
         let parsed = parse(text, false).expect("lenient parse ok");
@@ -1260,6 +1270,7 @@ PP 225 25 9
     #[test]
     fn bare_unknown_symbol_errors_even_when_lenient() {
         // No colon in the symbol => treated as a malformed action, not a header.
+        rust_i18n::set_locale("zh"); // assert against the default-locale wording
         let text = "scene:PE\nZ 1 2 3\nw 601\nPP 225 25 9\n";
         let err = parse(text, false).map(|_| ()).unwrap_err();
         assert!(err.contains("未知符号"), "got: {err}");

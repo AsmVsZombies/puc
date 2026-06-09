@@ -1,12 +1,6 @@
 use crate::constants;
 use std::{cmp, ops::Add};
 
-#[cfg(feature = "en")]
-use crate::lang::en::*;
-
-#[cfg(feature = "zh")]
-use crate::lang::zh::*;
-
 const GRAVITY: Vec2 = Vec2 { x: 0., y: -0.05 };
 const COL_WIDTH: i32 = 80;
 const COB_RADIUS: i32 = 115;
@@ -220,7 +214,7 @@ impl Scene {
             }
             Scene::PE => DelayMode::Delay2,
             Scene::RE => {
-                if hit_col <= 5. || cob_col.expect(NEED_COB_COL) <= 4 {
+                if hit_col <= 5. || cob_col.expect(&t!("need_cob_col")) <= 4 {
                     DelayMode::Delay3
                 } else {
                     DelayMode::Delay2
@@ -257,7 +251,7 @@ impl Scene {
             Scene::DE => &DE_COB_DIST,
             Scene::PE => &PE_COB_DIST,
             Scene::RE => RE_COB_DIST
-                .get((cob_col.expect(NEED_COB_COL) - 1) as usize)
+                .get((cob_col.expect(&t!("need_cob_col")) - 1) as usize)
                 .unwrap(),
         }
     }
@@ -773,7 +767,9 @@ impl IceAndCobTimes {
     ) -> Result<IceAndCobTimes, String> {
         if cob_time < 0 {
             return Err(format!(
-                "{COB_TIME_SHOULD_BE_NON_NEGATIVE} ({INPUT_ERROR_GOT}: {cob_time})"
+                "{} ({}: {cob_time})",
+                t!("cob_time_should_be_non_negative"),
+                t!("input_error_got")
             ));
         }
         let mut ice_times = ice_times

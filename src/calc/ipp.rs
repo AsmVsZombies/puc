@@ -6,10 +6,6 @@
 //! and the miner (矿工) together — for back/front yard (收二/收三) and roof per cob column.
 
 use super::{fmt_col, fmt_range, Equiv};
-#[cfg(feature = "en")]
-use crate::lang::en::*;
-#[cfg(feature = "zh")]
-use crate::lang::zh::*;
 use crate::tables::{FAST, SLOW};
 
 // back/front collect offsets: (zomboni_lo_off, zomboni_hi_off, miner_lo_off, miner_hi_off)
@@ -40,10 +36,10 @@ fn car_miner_range(
 
 pub fn run(transition: i32, wave_len: i32, ice: i32, equiv: Equiv) -> Result<(), String> {
     if wave_len < 0 {
-        return Err(IPP_WAVE_LEN_NONNEGATIVE.to_string());
+        return Err(t!("ipp_wave_len_nonnegative").to_string());
     }
     if transition < 0 {
-        return Err(CALC_BAD_TIME.to_string());
+        return Err(t!("calc_bad_time").to_string());
     }
     let equiv_v = match equiv {
         Equiv::Cob => 0,
@@ -91,25 +87,25 @@ pub fn run(transition: i32, wave_len: i32, ice: i32, equiv: Equiv) -> Result<(),
     let (f3l, f3h) = car_miner_range(car_fast, car_slow, miner_fast, miner_slow, FRONT3);
     outln!(
         "  {:<6} {:<2}={:<12} {:<2}={}",
-        IPP_BACK,
-        IPP_C2,
+        t!("ipp_back"),
+        t!("ipp_c2"),
         fmt_range(b2l, b2h),
-        IPP_C3,
+        t!("ipp_c3"),
         fmt_range(b3l, b3h)
     );
     outln!(
         "  {:<6} {:<2}={:<12} {:<2}={}",
-        IPP_FRONT,
-        IPP_C2,
+        t!("ipp_front"),
+        t!("ipp_c2"),
         fmt_range(f2l, f2h),
-        IPP_C3,
+        t!("ipp_c3"),
         fmt_range(f3l, f3h)
     );
 
     // roof: single cob-landing column to hit zomboni at the row above/same/below, per cob col.
     outln!(
         "  {} {:<8} {:<8} {}",
-        IPP_ROOF, IPP_ABOVE, IPP_SAME, IPP_BELOW
+        t!("ipp_roof"), t!("ipp_above"), t!("ipp_same"), t!("ipp_below")
     );
     let labels = ["1", "2", "3", "4", "5", "6", "7/8"];
     for i in 0..7 {
