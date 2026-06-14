@@ -30,13 +30,17 @@ pub const IMP: i32 = 0x18;
 pub const GIGA_GARGANTUAR: i32 = 0x20;
 
 // CN single-char abbreviation -> enum.
+//
+// Diverges from upstream `zombie_types.ts`, which aliased 报/news to BUCKETHEAD;
+// here they map to NEWSPAPER (the glyph name.h assigns to that type), so the
+// abbreviation matches the display name and round-trips.
 pub const CN_ABBR: &[(&str, i32)] = &[
     ("普", ZOMBIE),
     ("旗", FLAG),
     ("障", CONEHEAD),
     ("杆", POLE_VAULTING),
     ("桶", BUCKETHEAD),
-    ("报", BUCKETHEAD),
+    ("报", NEWSPAPER),
     ("门", SCREENDOOR),
     ("橄", FOOTBALL),
     ("舞", DANCING),
@@ -65,7 +69,7 @@ pub const EN_ABBR: &[(&str, i32)] = &[
     ("cone", CONEHEAD),
     ("pole", POLE_VAULTING),
     ("buck", BUCKETHEAD),
-    ("news", BUCKETHEAD),
+    ("news", NEWSPAPER),
     ("scre", SCREENDOOR),
     ("foot", FOOTBALL),
     ("danc", DANCING),
@@ -90,6 +94,7 @@ pub const EN_ABBR: &[(&str, i32)] = &[
 pub const ACCEPTABLE: &[i32] = &[
     POLE_VAULTING,
     BUCKETHEAD,
+    NEWSPAPER,
     SCREENDOOR,
     FOOTBALL,
     DANCING,
