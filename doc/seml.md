@@ -75,7 +75,7 @@ std:false
 | --- | --- |
 | `smash` | （仅通用参数） |
 | `explode` | （仅通用参数） |
-| `pos` | `types:` 测试的僵尸类型；`targetPos:` 设置后改为「到达该整数坐标的时刻」分布 |
+| `pos` | `types:` 测试的僵尸类型；`targetPos:` 设置后改为「到达该整数坐标的时刻」分布；`huge:` 旗帜波（出怪坐标 +40） |
 | `pogo` | `protect:` 只取列数（无需提供多行）；屋顶需用一条用炮操作给出考虑的炮尾列 |
 | `refresh` | `require:` 必出类型；`ban:` 禁出类型；`huge:` 旗帜波；`activate:` 激活 / 分离；`dance:` dance cheat；`natural:` 自然 / 均匀出怪 |
 

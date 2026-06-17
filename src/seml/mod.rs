@@ -169,6 +169,7 @@ fn build_params(kind: SemlType, p: &Params) -> Value {
             if let Some(x) = p.target_x {
                 obj.insert("targetX".into(), json!(x));
             }
+            obj.insert("huge".into(), json!(p.huge.unwrap_or(false)));
             obj.insert("disableCobDelay".into(), json!(disable_cob_delay(p)));
         }
         SemlType::Smash | SemlType::Explode => {
