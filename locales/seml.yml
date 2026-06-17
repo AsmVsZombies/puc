@@ -316,6 +316,18 @@ seml_row_same:
 seml_row_lower:
   en: "row↓"
   zh: "炮行↓"
+seml_hit_rate:
+  en: "hit%"
+  zh: "受击率"
+seml_hit_count:
+  en: "hit"
+  zh: "受击数"
+seml_hit_avg_hp:
+  en: "hit.hp"
+  zh: "受击均血"
+seml_nothit_avg_hp:
+  en: "nothit.hp"
+  zh: "未受击均血"
 
 # ════════════════════════════════════════════════════════════════════════
 # Zombie display names for the clean table (src/seml/zombie.rs name_i18n).
@@ -325,6 +337,9 @@ seml_row_lower:
 zname_zombie:
   en: "reg"
   zh: "普"
+zname_flag:
+  en: "flag"
+  zh: "旗"
 zname_conehead:
   en: "cone"
   zh: "障"
@@ -367,6 +382,9 @@ zname_digger:
 zname_pogo:
   en: "pogo"
   zh: "跳"
+zname_yeti:
+  en: "yeti"
+  zh: "雪"
 zname_bungee:
   en: "bung"
   zh: "偷"

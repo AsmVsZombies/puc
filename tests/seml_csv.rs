@@ -115,6 +115,45 @@ fn file_target_written_verbatim() {
 }
 
 #[test]
+fn survive_table_and_csv() {
+    let dir = TmpDir::new("survive");
+    let stdout = run(&[
+        "seml",
+        "survive",
+        &fixture("survive.seml"),
+        "--csv",
+        dir.path().to_str().unwrap(),
+    ]);
+
+    // Header echoes the (defaulted) hit threshold; the auto-derived type set
+    // includes 白/红 (gargs) but never 鸭 (ducky tube, always excluded).
+    assert!(stdout.contains("seml survive"), "header missing: {stdout}");
+    assert!(stdout.contains("hitThres=1800"), "no hitThres: {stdout}");
+    assert!(stdout.contains("白") && stdout.contains("红"), "garg rows missing");
+    assert!(!stdout.contains("鸭"), "ducky tube should be excluded: {stdout}");
+    assert!(!stdout.contains("偷"), "bungee should be excluded: {stdout}");
+
+    // Every printed 受击率 cell is a percentage in [0, 100].
+    for line in stdout.lines().filter(|l| l.trim_start().starts_with("1 ")) {
+        let pct = line
+            .split_whitespace()
+            .find_map(|t| t.strip_suffix('%'))
+            .and_then(|n| n.parse::<f64>().ok())
+            .unwrap_or_else(|| panic!("no rate in row: {line}"));
+        assert!((0.0..=100.0).contains(&pct), "rate out of range: {line}");
+    }
+
+    let entries: Vec<_> = std::fs::read_dir(dir.path())
+        .unwrap()
+        .map(|e| e.unwrap().file_name().into_string().unwrap())
+        .collect();
+    assert_eq!(entries.len(), 1, "expected one CSV, got {entries:?}");
+    let body = read_csv_body(&dir.path().join(&entries[0]));
+    assert!(body.contains("受击率,"), "csv 受击率 row missing: {body}");
+    assert!(body.contains("未受击均血,"), "csv 未受击均血 row missing: {body}");
+}
+
+#[test]
 fn absent_csv_writes_no_file() {
     let dir = TmpDir::new("none");
     let stdout = run(&["seml", "smash", &fixture("smash.seml")]);

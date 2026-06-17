@@ -19,7 +19,7 @@ fn run(args: &[&str]) -> String {
 
 #[test]
 fn ipp_matches_sheet() {
-    let o = run(&["ipp", "433", "--wave-len", "601", "--ice", "0"]);
+    let o = run(&["ipp", "433", "--wave-len", "601"]);
     assert!(o.contains("garg_x=719.94"), "{o}");
     assert!(o.contains("cob_col=7.4125"), "{o}");
     // 后院收二 7.4125~8.55, 收三 7.45~8.4625

@@ -88,7 +88,7 @@ enum Command {
     },
     /// seml: 解析 seml 文件并运行对应模拟器, 输出整洁表格 (reuse 为用炮复用计算)
     Seml {
-        /// 测试类型 (pos/smash/explode/refresh/pogo/reuse)
+        /// 测试类型 (pos/smash/explode/refresh/pogo/survive/reuse)
         #[arg(value_enum)]
         r#type: SemlType,
         /// seml 文件路径

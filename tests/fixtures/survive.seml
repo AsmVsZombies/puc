@@ -1,0 +1,9 @@
+# 存活测试：PE 各类型受击率（小 repeat 仅供冒烟测试）
+scene:PE
+dance:true
+repeat:50
+
+w 401
+PP 291 12 9
+P 401 1 8.7
+P 264 5 8.2625

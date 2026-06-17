@@ -41,6 +41,8 @@ pub enum SemlType {
     Refresh,
     /// 跳跳（跳跳收集范围）
     Pogo,
+    /// 存活（各僵尸类型受击率与受击/未受击均血）
+    Survive,
     /// 用炮复用（炮复用计算；不经模拟器）
     Reuse,
 }
@@ -53,6 +55,7 @@ impl SemlType {
             SemlType::Explode => "explode",
             SemlType::Refresh => "refresh",
             SemlType::Pogo => "pogo",
+            SemlType::Survive => "survive",
             SemlType::Reuse => "reuse",
         }
     }
@@ -99,7 +102,13 @@ pub fn run_text(
     let scenario =
         serde_json::to_string(&parsed.config)
             .map_err(|err| t!("seml_serialize_failed", err = err).to_string())?;
-    let params_json = build_params(kind, &parsed.params).to_string();
+    let original_scene = parsed
+        .config
+        .setting
+        .original_scene
+        .as_deref()
+        .unwrap_or("PE");
+    let params_json = build_params(kind, &parsed.params, original_scene).to_string();
 
     let result = pvz_emulator_sys::run(kind.as_str(), &scenario, &params_json)?;
     let value: Value =
@@ -112,6 +121,7 @@ pub fn run_text(
         SemlType::Explode => format::explode(&value, &parsed.params, compact),
         SemlType::Refresh => format::refresh(&value, &parsed.params, compact),
         SemlType::Pogo => format::pogo(&value, &parsed.params, compact),
+        SemlType::Survive => format::survive(&value, &parsed.params, compact),
         SemlType::Reuse => unreachable!("reuse handled before emulator dispatch"),
     }
 
@@ -122,6 +132,7 @@ pub fn run_text(
             SemlType::Explode => csv::explode(&value, &parsed.params),
             SemlType::Refresh => csv::refresh(&value, &parsed.params),
             SemlType::Pogo => csv::pogo(&value),
+            SemlType::Survive => csv::survive(&value, &parsed.params),
             SemlType::Reuse => unreachable!("reuse handled before emulator dispatch"),
         };
         let out_path = write_csv(&target, &body)?;
@@ -155,7 +166,7 @@ fn disable_cob_delay(p: &Params) -> bool {
 
 /// Build the per-calculator params JSON, including only the keys it reads.
 /// Omitting `repeat` when absent lets the shim apply its per-calculator default.
-fn build_params(kind: SemlType, p: &Params) -> Value {
+fn build_params(kind: SemlType, p: &Params, original_scene: &str) -> Value {
     let mut obj = serde_json::Map::new();
     if let Some(r) = p.repeat {
         obj.insert("repeat".into(), json!(r));
@@ -185,6 +196,15 @@ fn build_params(kind: SemlType, p: &Params) -> Value {
             obj.insert("activate".into(), json!(p.activate.unwrap_or(false)));
             obj.insert("dance".into(), json!(p.dance.unwrap_or(false)));
             obj.insert("natural".into(), json!(p.natural.unwrap_or(false)));
+            obj.insert("disableCobDelay".into(), json!(disable_cob_delay(p)));
+        }
+        SemlType::Survive => {
+            obj.insert(
+                "zombies".into(),
+                json!(zombie::survive_types(original_scene)),
+            );
+            obj.insert("hitThres".into(), json!(p.hit_thres.unwrap_or(1800)));
+            obj.insert("huge".into(), json!(p.huge.unwrap_or(false)));
             obj.insert("disableCobDelay".into(), json!(disable_cob_delay(p)));
         }
         SemlType::Pogo => {}

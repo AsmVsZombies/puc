@@ -472,3 +472,50 @@ pub fn pogo(v: &Value, _p: &Params, compact: bool) {
         );
     }
 }
+
+// --- survive -----------------------------------------------------------------
+
+pub fn survive(v: &Value, p: &Params, _compact: bool) {
+    let columns = arr(v, "columns");
+    let stats = arr(v, "stats");
+
+    outln!("seml survive repeat={} hitThres={}", i(v, "repeat"), i(v, "hitThres"));
+    outln!(
+        "  {:<6} {:<8} {:<14} {:<10} {:<10} {:<10}",
+        "wave",
+        "zombie",
+        t!("seml_hit_rate"),
+        t!("seml_hit_count"),
+        t!("seml_hit_avg_hp"),
+        t!("seml_nothit_avg_hp")
+    );
+
+    for (col, st) in columns.iter().zip(stats.iter()) {
+        let wave = i(col, "waveIdx") + 1;
+        let zname = zombie::name_i18n(i(col, "zombieType") as i32);
+        let total = i(st, "totalCount");
+        let hit = i(st, "hitCount");
+        let not_hit = total - hit;
+        let (mean, se) = rate_pct(hit, total);
+        // hp averages are over each bucket; an empty bucket shows 0.
+        let hit_avg = if hit > 0 {
+            f(st, "hitHpSum").unwrap_or(0.0) / hit as f64
+        } else {
+            0.0
+        };
+        let not_hit_avg = if not_hit > 0 {
+            f(st, "notHitHpSum").unwrap_or(0.0) / not_hit as f64
+        } else {
+            0.0
+        };
+        outln!(
+            "  {:<6} {:<8} {:<14} {:<10} {:<10.1} {:<10.1}",
+            wave,
+            zname,
+            fmt_pct(mean, se, p.show_std),
+            hit,
+            hit_avg,
+            not_hit_avg
+        );
+    }
+}

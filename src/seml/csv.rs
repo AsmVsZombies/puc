@@ -707,6 +707,93 @@ pub fn refresh(v: &Value, p: &Params) -> String {
     s
 }
 
+// --- survive -----------------------------------------------------------------
+
+/// Transposed table, laid out like [`pos`] (one column per (wave, type)): a
+/// wave-length row, a type-name row, then 受击率 / 受击数 / 总数 / 受击均血 /
+/// 未受击均血 rows. No vendor reference exists for this calculator.
+pub fn survive(v: &Value, p: &Params) -> String {
+    let columns = arr(v, "columns");
+    let stats = arr(v, "stats");
+    let show_std = p.show_std;
+    let mut s = String::new();
+
+    // Row 1: wave_length printed in the first column of each wave.
+    let mut prev_wave = i64::MIN;
+    for col in columns {
+        s.push(',');
+        let wi = i(col, "waveIdx");
+        if wi != prev_wave {
+            s.push_str(&i(col, "waveLength").to_string());
+            prev_wave = wi;
+        }
+    }
+    s.push('\n');
+
+    // Row 2: zombie type names.
+    s.push_str("僵尸类别");
+    for col in columns {
+        s.push(',');
+        s.push_str(&zombie::name(i(col, "zombieType") as i32));
+    }
+    s.push('\n');
+
+    // 受击率 row.
+    s.push_str("受击率");
+    for st in stats {
+        let (mean, se) = rate_pct(i(st, "hitCount"), i(st, "totalCount"));
+        s.push(',');
+        if show_std {
+            s.push_str(&format_mean_std(mean, se, "%", 2));
+        } else {
+            s.push_str(&format!("{:.2}%", mean));
+        }
+    }
+    s.push('\n');
+
+    // 受击数 / 总数 rows.
+    s.push_str("受击数");
+    for st in stats {
+        s.push(',');
+        s.push_str(&i(st, "hitCount").to_string());
+    }
+    s.push('\n');
+    s.push_str("总数");
+    for st in stats {
+        s.push(',');
+        s.push_str(&i(st, "totalCount").to_string());
+    }
+    s.push('\n');
+
+    // 受击均血 / 未受击均血 rows (empty bucket shows 0).
+    s.push_str("受击均血");
+    for st in stats {
+        s.push(',');
+        let hit = i(st, "hitCount");
+        let avg = if hit > 0 {
+            f(st, "hitHpSum").unwrap_or(0.0) / hit as f64
+        } else {
+            0.0
+        };
+        s.push_str(&format!("{:.3}", avg));
+    }
+    s.push('\n');
+    s.push_str("未受击均血");
+    for st in stats {
+        s.push(',');
+        let not_hit = i(st, "totalCount") - i(st, "hitCount");
+        let avg = if not_hit > 0 {
+            f(st, "notHitHpSum").unwrap_or(0.0) / not_hit as f64
+        } else {
+            0.0
+        };
+        s.push_str(&format!("{:.3}", avg));
+    }
+    s.push('\n');
+
+    s
+}
+
 // --- pogo -------------------------------------------------------------------
 
 pub fn pogo(v: &Value) -> String {

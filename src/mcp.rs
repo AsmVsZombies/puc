@@ -145,7 +145,7 @@ struct IppParams {
 
 #[derive(Deserialize, schemars::JsonSchema)]
 struct SemlParams {
-    /// 测试类型："pos"、"smash"、"explode"、"refresh" 或 "pogo"。
+    /// 测试类型："pos"、"smash"、"explode"、"refresh"、"pogo"、"survive" 或 "reuse"。
     r#type: String,
     /// SEML 文件路径。提供此项或 `content`（不可同时给出）。
     #[serde(default)]
@@ -267,7 +267,7 @@ impl PucServer {
 
     #[tool(
         name = "puc_seml",
-        description = "seml：解析 SEML 场景并运行对应测试。类型 `pos`/`smash`/`explode`/`refresh`/`pogo` 运行 PvZ 模拟器并打印整洁表格；类型 `reuse` 为炮复用计算器（纯时机计算，不经模拟器，参数详见 puc://docs/seml）。提供 `content`（内联 SEML）或 `file`（路径），两者不可同时给出。设置 `csv` 可同时导出 CSV（文件路径，或目录则使用 `<stem> (timestamp).csv` 名）。"
+        description = "seml：解析 SEML 场景并运行对应测试。类型 `pos`/`smash`/`explode`/`refresh`/`pogo`/`survive` 运行 PvZ 模拟器并打印整洁表格（`survive` 对每波放入 5× 各场景允许的僵尸类型，报告各类型受击率与受击/未受击均血；受击定义为死亡或受创 ≥ `hitThres`，默认 1800）；类型 `reuse` 为炮复用计算器（纯时机计算，不经模拟器，参数详见 puc://docs/seml）。提供 `content`（内联 SEML）或 `file`（路径），两者不可同时给出。设置 `csv` 可同时导出 CSV（文件路径，或目录则使用 `<stem> (timestamp).csv` 名）。"
     )]
     fn puc_seml(&self, Parameters(p): Parameters<SemlParams>) -> CallToolResult {
         let kind = match req_enum::<SemlType>(&p.r#type, "type") {

@@ -124,6 +124,9 @@ pub fn parse(text: &str, strict: bool) -> R<Parsed> {
             if let Some(b) = parse_bool_arg(&mut seen, "std", line_num, &line)? {
                 params.show_std = b;
             }
+        } else if symbol.starts_with("hitThres:") {
+            let v = parse_int_arg(&mut seen, "hitThres", line_num, &line)?;
+            params.hit_thres = Some(v);
         } else if symbol.starts_with("types:") {
             let original = config.setting.original_scene.clone().unwrap_or_default();
             let v =

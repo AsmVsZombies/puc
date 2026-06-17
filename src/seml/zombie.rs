@@ -112,6 +112,48 @@ pub const ACCEPTABLE: &[i32] = &[
     GIGA_GARGANTUAR,
 ];
 
+/// Every zombie type the emulator can spawn directly, in enum order. Excludes
+/// the summon-only types (`BACKUP_DANCER`, `IMP`) which only appear via another
+/// zombie. Used by the `survive` calculator to populate the field.
+pub const ALL_TYPES: &[i32] = &[
+    ZOMBIE,
+    FLAG,
+    CONEHEAD,
+    POLE_VAULTING,
+    BUCKETHEAD,
+    NEWSPAPER,
+    SCREENDOOR,
+    FOOTBALL,
+    DANCING,
+    DUCKY_TUBE,
+    SNORKEL,
+    ZOMBONI,
+    DOLPHIN_RIDER,
+    JACK_IN_THE_BOX,
+    BALLOON,
+    DIGGER,
+    POGO,
+    YETI,
+    BUNGEE,
+    LADDER,
+    CATAPULT,
+    GARGANTUAR,
+    GIGA_GARGANTUAR,
+];
+
+/// Zombie types the `survive` calculator spawns for a scene: every non-summon
+/// type, minus `DUCKY_TUBE` (water-only) and `BUNGEE` (drops onto plants — does
+/// not walk, so survival is ill-defined), both always ignored, and minus the
+/// scene's [`banned`] list. `scene` is the *original* code (DE/NE/PE/FE/RE/ME).
+pub fn survive_types(scene: &str) -> Vec<i32> {
+    let banned = banned(scene);
+    ALL_TYPES
+        .iter()
+        .copied()
+        .filter(|t| *t != DUCKY_TUBE && *t != BUNGEE && !banned.contains(t))
+        .collect()
+}
+
 /// Banned zombie types per *original* scene code.
 pub fn banned(scene: &str) -> &'static [i32] {
     match scene {
@@ -139,6 +181,7 @@ pub fn en_keys() -> Vec<&'static str> {
 pub fn name(id: i32) -> String {
     let n = match id {
         ZOMBIE => "普",
+        FLAG => "旗",
         CONEHEAD => "障",
         POLE_VAULTING => "杆",
         BUCKETHEAD => "桶",
@@ -153,6 +196,7 @@ pub fn name(id: i32) -> String {
         BALLOON => "气",
         DIGGER => "矿",
         POGO => "跳",
+        YETI => "雪",
         BUNGEE => "偷",
         LADDER => "梯",
         CATAPULT => "篮",
@@ -172,6 +216,7 @@ pub fn name(id: i32) -> String {
 pub fn name_i18n(id: i32) -> String {
     let key = match id {
         ZOMBIE => "zname_zombie",
+        FLAG => "zname_flag",
         CONEHEAD => "zname_conehead",
         POLE_VAULTING => "zname_pole_vaulting",
         BUCKETHEAD => "zname_buckethead",
@@ -186,6 +231,7 @@ pub fn name_i18n(id: i32) -> String {
         BALLOON => "zname_balloon",
         DIGGER => "zname_digger",
         POGO => "zname_pogo",
+        YETI => "zname_yeti",
         BUNGEE => "zname_bungee",
         LADDER => "zname_ladder",
         CATAPULT => "zname_catapult",

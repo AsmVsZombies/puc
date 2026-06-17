@@ -5,7 +5,7 @@ SEML（Survival Endless Markup Language）是为 PvZ 生存无尽定制的标记
 `puc` 支持：
 
 ```sh
-puc seml [--compact] [--strict] [--csv <目标>] <pos|smash|explode|refresh|pogo|reuse> <文件>
+puc seml [--compact] [--strict] [--csv <目标>] <pos|smash|explode|refresh|pogo|survive|reuse> <文件>
 ```
 
 也可通过 MCP 工具 `puc_seml` 传入 `content`（内联 SEML）或 `file`（路径），两者不可同时给出；
@@ -35,6 +35,7 @@ puc seml [--compact] [--strict] [--csv <目标>] <pos|smash|explode|refresh|pogo
 | `refresh` | 刷新测试 | 刷新意外率 | 1000 |
 | `pogo` | 跳跳测试 | 全收跳跳的时机范围 | 1000 |
 | `pos` | 坐标分布测试 | 僵尸坐标分布或到达指定坐标的时刻分布 | 20000 |
+| `survive` | 存活测试 | 每波放入 5× 各场景允许的僵尸类型，报告各类型受击率与受击/未受击均血 | 20000 |
 
 ## 基本规则
 
@@ -78,6 +79,7 @@ std:false
 | `pos` | `types:` 测试的僵尸类型；`targetPos:` 设置后改为「到达该整数坐标的时刻」分布；`huge:` 旗帜波（出怪坐标 +40） |
 | `pogo` | `protect:` 只取列数（无需提供多行）；屋顶需用一条用炮操作给出考虑的炮尾列 |
 | `refresh` | `require:` 必出类型；`ban:` 禁出类型；`huge:` 旗帜波；`activate:` 激活 / 分离；`dance:` dance cheat；`natural:` 自然 / 均匀出怪 |
+| `survive` | `hitThres:` 受击伤害阈值，默认 1800；僵尸类型自动取「除召唤型（伴舞、小鬼）、鸭子、偷天换日外、且场景允许」的全部类型，受击定义为死亡或受创 ≥ 阈值（受创 = 初始血 − 当前血，血量按 `本体 + 饰品1 + 饰品2×0.2 + 气球20` 计，于出生时取初始基线） |
 
 僵尸类型可用中文单字或英文四字缩写，例如 `红白`、`giga garg`、`foot zomb`。命名一览：
 

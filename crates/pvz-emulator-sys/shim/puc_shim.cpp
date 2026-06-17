@@ -23,6 +23,7 @@ std::string puc_dispatch_smash(const char* scenario_json, const char* params_jso
 std::string puc_dispatch_explode(const char* scenario_json, const char* params_json);
 std::string puc_dispatch_refresh(const char* scenario_json, const char* params_json);
 std::string puc_dispatch_pogo(const char* scenario_json, const char* params_json);
+std::string puc_dispatch_survive(const char* scenario_json, const char* params_json);
 
 namespace {
 
@@ -50,6 +51,8 @@ std::string dispatch(const std::string& calc, const char* scenario_json, const c
         return puc_dispatch_refresh(scenario_json, params_json);
     if (calc == "pogo")
         return puc_dispatch_pogo(scenario_json, params_json);
+    if (calc == "survive")
+        return puc_dispatch_survive(scenario_json, params_json);
     throw std::runtime_error("unknown calculator: " + calc);
 }
 
